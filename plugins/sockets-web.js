@@ -326,7 +326,7 @@ app.post('/request-code', checkAuth, async (req, res) => {
     } catch (e) { res.json({ success: false, error: e.message }) }
 })
 
-app.listen(PORT, () => console.log(chalk.green(`MayBot Web Interface: http://localhost:${PORT}`)))
+app.listen(PORT, () => console.log(chalk.green(`[ ♣ ] Servidor Web Iniciado.`)))
 
 export default {
     tags: ['main'],
