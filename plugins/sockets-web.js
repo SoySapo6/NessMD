@@ -29,7 +29,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 const app = express()
-const PORT = 5003
+const PORT = process.env.PORT || process.env.SERVER_PORT || 3000
 const COOKIE_SECRET = 'may-7h5fa8'
 
 app.use(express.urlencoded({ extended: true }))
