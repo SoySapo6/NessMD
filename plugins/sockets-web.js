@@ -333,6 +333,6 @@ export default {
     command: ['web'],
     help: ['web'],
     handler: (m) => {
-        m.reply(`Panel MayBot activo en el puerto ${PORT}`)
+        m.reply(`[ ♣ ] Servidor Web Iniciado.`)
     }
 }
