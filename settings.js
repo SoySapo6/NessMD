@@ -21,7 +21,7 @@ global.dev = 'SσყMαყƈσʅ ⌇°•'
 global.author = 'SσყMαყƈσʅ ⌇°•'
 global.etiqueta = 'ˢᵒʸᵐᵃʸᶜᵒˡ'
 global.currency = 'MayCoins'
-global.banner = "https://i.postimg.cc/SQTP9YCm/4-sin-titulo-20251120074041.jpg"
+global.banner = "https://files.catbox.moe/aqi8wi.png"
 global.icono = "https://files.catbox.moe/ycagn5.jpeg"
 global.catalogo = fs.readFileSync('./lib/catalogo.jpg')
 
