@@ -5,33 +5,33 @@ import fs from "fs"
 
 global.botNumber = "" 
 
-global.owner = ["50493732693", "584242773183", "51921826291"]
+global.owner = ["51921826291"]
 global.suittag = [""] 
 global.prems = []
 
-global.libreria = "Baileys Multi Device"
+global.libreria = "@soymaycol/baileys"
 global.vs = "^1.8.2|Latest"
-global.sessions = "Sessions/Principal"
-global.jadi = "Sessions/SubBot"
+global.sessions = "MayBots/Principal"
+global.jadi = "MayBots/SubBots"
 global.yukiJadibts = true
 
-global.botname = '✿ 𝖠𝗂𝗄𝗈 𝖡𝗈𝗍'
-global.textbot = 'ᰔᩚ 𝖠𝗂𝗄𝗈 𝖡𝗈𝗍'
-global.dev = '© 𝗣𝗼𝘄𝗲𝗿𝗲𝗱 𝗯𝘆 𝗔𝗱𝗼, 𝗬𝗼𝘀𝘂𝗲'
-global.author = '❀ 𝗠𝗮𝗱𝗲 𝘄𝗶𝘁𝗵 𝗔𝗱𝗼, 𝗬𝗼𝘀𝘂𝗲'
-global.etiqueta = '𝗔𝗱𝗼, 𝗬𝗼𝘀𝘂𝗲'
-global.currency = '€ 𝖤𝖴𝖱𝖮𝖲'
-global.banner = "https://files.catbox.moe/8obt28.jpg"
-global.icono = "https://files.catbox.moe/hhxpb5.jpg"
+global.botname = '⊱┊ MαყBσƚ ❦'
+global.textbot = 'MαყBσƚ'
+global.dev = 'SσყMαყƈσʅ ⌇°•'
+global.author = 'SσყMαყƈσʅ ⌇°•'
+global.etiqueta = 'ˢᵒʸᵐᵃʸᶜᵒˡ'
+global.currency = 'MayCoins'
+global.banner = "https://i.postimg.cc/SQTP9YCm/4-sin-titulo-20251120074041.jpg"
+global.icono = "https://files.catbox.moe/ycagn5.jpeg"
 global.catalogo = fs.readFileSync('./lib/catalogo.jpg')
 
-global.group = "https://chat.whatsapp.com/HaKf6ezcwdbGzmH782eBal"
-global.community = "https://chat.whatsapp.com/G0kXqsteJFU74yrLtg79o6"
-global.channel = "https://whatsapp.com/channel/0029Vb64nWqLo4hb8cuxe23n"
-global.github = "https://github.com/The-King-Destroy/YukiBot-MD"
-global.gmail = "thekingdestroy507@gmail.com"
+global.group = "https://chat.whatsapp.com/JNQMGcG9jl00jYBM1iV8Jn"
+global.community = "https://chat.whatsapp.com/KqkJwla1aq1LgaPiuFFtEY"
+global.channel = "https://whatsapp.com/channel/0029VayXJte65yD6LQGiRB0R"
+global.github = "https://github.com/SoySapo6/MayBot"
+global.gmail = "soymaycol.cn@gmail.com"
 global.ch = {
-ch1: "120363401404146384@newsletter"
+ch1: "120363424241780448@newsletter"
 }
 
 global.APIs = {
