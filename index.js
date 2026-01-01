@@ -29,7 +29,7 @@ import readline, { createInterface } from 'readline'
 import NodeCache from 'node-cache'
 const { CONNECTING } = ws
 const { chain } = lodash
-const PORT = process.env.PORT || process.env.SERVER_PORT || 5003
+const PORT = 3001
 
 let { say } = cfonts
 console.log(chalk.magentaBright('\n❀ Iniciando...'))
