@@ -3,18 +3,24 @@ import chalk from "chalk"
 import { fileURLToPath } from "url"
 import fs from "fs"
 
-global.botNumber = "" 
+/* > Información de la cuenta owner < */
+global.userowner = "SoyMaycol"
+global.passowner = "elpromaki123"
 
+/* > Información del numero < */
+global.botNumber = "" 
 global.owner = ["51921826291"]
 global.suittag = [""] 
 global.prems = []
 
+/* > Información del sistema < */
 global.libreria = "@soymaycol/baileys"
 global.vs = "^1.8.2|Latest"
 global.sessions = "MayBots/Principal"
 global.jadi = "MayBots/SubBots"
 global.yukiJadibts = true
 
+/* > Personalizacion del Bot < */
 global.botname = '⊱┊ MαყBσƚ ❦'
 global.textbot = 'MαყBσƚ'
 global.dev = 'SσყMαყƈσʅ ⌇°•'
@@ -25,6 +31,7 @@ global.banner = "https://files.catbox.moe/aqi8wi.png"
 global.icono = "https://files.catbox.moe/ycagn5.jpeg"
 global.catalogo = fs.readFileSync('./lib/catalogo.jpg')
 
+/* > Información del Creador < */
 global.group = "https://chat.whatsapp.com/JNQMGcG9jl00jYBM1iV8Jn"
 global.community = "https://chat.whatsapp.com/KqkJwla1aq1LgaPiuFFtEY"
 global.channel = "https://whatsapp.com/channel/0029VayXJte65yD6LQGiRB0R"
@@ -34,6 +41,7 @@ global.ch = {
 ch1: "120363424241780448@newsletter"
 }
 
+/* > Lista de API's para usar < */
 global.APIs = {
 xyro: { url: "https://api.xyro.site", key: null },
 yupra: { url: "https://api.yupra.my.id", key: null },
