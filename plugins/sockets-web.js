@@ -190,6 +190,14 @@ const checkRole = (roles) => (req, res, next) => {
     res.status(403).json({ error: 'Acceso denegado' })
 }
 
+app.get('/', (req, res) => {
+      if (req.signedCookies.user) {
+        res.redirect('/dashboard')
+    } else {
+        res.redirect('/login')
+    }
+})
+
 app.get('/login', (req, res) => res.render('login', { error: null }))
 app.post('/login', (req, res) => {
     const { username, password } = req.body
