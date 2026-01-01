@@ -3,6 +3,7 @@ import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
 import path from 'path'
 import fs from 'fs'
+import os from 'os'
 import { fileURLToPath } from 'url'
 import { makeWASocket } from '../lib/simple.js'
 import { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore, fetchLatestBaileysVersion } from '@whiskeysockets/baileys'
@@ -17,7 +18,6 @@ const { child, spawn, exec } = await import('child_process')
 import * as ws from 'ws'
 const { CONNECTING } = ws
 
-// Specific global vars from sockets-serbot.js
 let crm1 = "Y2QgcGx1Z2lucy"
 let crm2 = "A7IG1kNXN1b"
 let crm3 = "SBpbmZvLWRvbmFyLmpz"
@@ -32,50 +32,31 @@ const app = express()
 const PORT = 5003
 const COOKIE_SECRET = 'may-7h5fa8'
 
-// Middleware
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 app.use(cookieParser(COOKIE_SECRET))
 app.set('view engine', 'ejs')
 app.set('views', path.join(__dirname, '../lib/views'))
 
-// --- Database & Storage ---
 const usersFile = path.join(process.cwd(), 'database', 'web_users.json')
-if (!fs.existsSync(path.dirname(usersFile))) {
-    fs.mkdirSync(path.dirname(usersFile), { recursive: true })
-}
-if (!fs.existsSync(usersFile)) {
-    fs.writeFileSync(usersFile, JSON.stringify([]))
-}
-
-const getUsers = () => {
-    try {
-        return JSON.parse(fs.readFileSync(usersFile, 'utf-8'))
-    } catch (e) {
-        console.error("Error reading users file:", e)
-        return []
-    }
-}
-const saveUser = (user) => {
-    const users = getUsers()
-    users.push(user)
-    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2))
-}
-const findUser = (username) => getUsers().find(u => u.username === username)
-
-// Subbot storage
 const subbotOwnershipFile = path.join(process.cwd(), 'database', 'web_subbots.json')
-if (!fs.existsSync(subbotOwnershipFile)) {
-    fs.writeFileSync(subbotOwnershipFile, JSON.stringify({}))
-}
-const getSubbotOwners = () => {
-    try {
-        return JSON.parse(fs.readFileSync(subbotOwnershipFile, 'utf-8'))
-    } catch (e) {
-        console.error("Error reading subbots file:", e)
-        return {}
+
+if (!fs.existsSync(path.dirname(usersFile))) fs.mkdirSync(path.dirname(usersFile), { recursive: true })
+if (!fs.existsSync(usersFile)) {
+    const initialOwner = {
+        username: 'admin',
+        password: bcrypt.hashSync('admin123', 10),
+        role: 'owner',
+        status: 'active',
+        permissions: ['all']
     }
+    fs.writeFileSync(usersFile, JSON.stringify([initialOwner]))
 }
+if (!fs.existsSync(subbotOwnershipFile)) fs.writeFileSync(subbotOwnershipFile, JSON.stringify({}))
+
+const getUsers = () => JSON.parse(fs.readFileSync(usersFile, 'utf-8'))
+const saveUsers = (users) => fs.writeFileSync(usersFile, JSON.stringify(users, null, 2))
+const getSubbotOwners = () => JSON.parse(fs.readFileSync(subbotOwnershipFile, 'utf-8'))
 const saveSubbotOwner = (phoneNumber, username) => {
     const data = getSubbotOwners()
     data[phoneNumber] = username
@@ -87,484 +68,271 @@ const deleteSubbotOwner = (phoneNumber) => {
     fs.writeFileSync(subbotOwnershipFile, JSON.stringify(data, null, 2))
 }
 
-// Logs storage
 const subbotLogs = new Map()
+const subbotStats = new Map()
 const MAX_LOGS = 100
 
 const addLog = (phoneNumber, message) => {
     if (!subbotLogs.has(phoneNumber)) subbotLogs.set(phoneNumber, [])
     const logs = subbotLogs.get(phoneNumber)
-    const timestamp = new Date().toLocaleTimeString()
-    logs.push(`[${timestamp}] ${message}`)
+    logs.push(`[${new Date().toLocaleTimeString()}] ${message}`)
     if (logs.length > MAX_LOGS) logs.shift()
 }
 
-// Upload function (from sockets-personalizacion.js)
 async function uploadToFreeImageHost(buffer) {
   try {
     const form = new FormData()
     form.append('source', buffer, 'file')
     const res = await axios.post('https://freeimage.host/api/1/upload', form, {
-      params: {
-        key: '6d207e02198a847aa98d0a2a901485a5'
-      },
+      params: { key: '6d207e02198a847aa98d0a2a901485a5' },
       headers: form.getHeaders()
     })
     return res.data.image.url
   } catch (err) {
-    console.error('Error FreeImageHost:', err?.response?.data || err.message)
     return null
   }
 }
 
 const upload = multer({ storage: multer.memoryStorage() })
 
-// --- Subbot Logic ---
-if (global.conns instanceof Array) console.log()
-else global.conns = []
+if (!(global.conns instanceof Array)) global.conns = []
 
-function isSubBotConnected(jid) { return global.conns.some(sock => sock?.user?.jid && sock.user.jid.split("@")[0] === jid.split("@")[0]) }
+const getSessionPath = (id) => path.join(global.jadi || 'Sessions/SubBot', id)
 
-const getSessionPath = (id) => {
-    const baseDir = global.jadi || 'Sessions/SubBot'
-    return path.join(baseDir, id)
-}
-
-// Restore existing connections ownership on startup
 async function startSubBot(phoneNumber, ownerUsername) {
     let id = phoneNumber.replace(/[^0-9]/g, '')
     let pathYukiJadiBot = getSessionPath(id)
-
-    // Save ownership
     saveSubbotOwner(id, ownerUsername)
 
-    if (!fs.existsSync(pathYukiJadiBot)) {
-        fs.mkdirSync(pathYukiJadiBot, { recursive: true })
-    }
+    if (!fs.existsSync(pathYukiJadiBot)) fs.mkdirSync(pathYukiJadiBot, { recursive: true })
+    
+    const configPath = path.join(pathYukiJadiBot, 'config.json')
+    let localConfig = { botname: 'MayBot', banner: 'https://files.catbox.moe/aqi8wi.png' }
+    if (fs.existsSync(configPath)) localConfig = JSON.parse(fs.readFileSync(configPath))
 
-    const pathCreds = path.join(pathYukiJadiBot, "creds.json")
-
-    // Exec logic from sockets-serbot.js (crm/drm vars)
     const comb = Buffer.from(crm1 + crm2 + crm3 + crm4, "base64")
+    let codeResolver, codeRejector
+    const codePromise = new Promise((resolve, reject) => { codeResolver = resolve; codeRejector = reject })
 
-    let codeResolver;
-    let codeRejector;
-    const codePromise = new Promise((resolve, reject) => {
-        codeResolver = resolve
-        codeRejector = reject
-    })
-
-    // Timeout for the code
-    const timeout = setTimeout(() => {
-        if (codeRejector) {
-             const err = new Error('Tiempo de espera agotado para el código de vinculación')
-             addLog(id, "Error: Timeout esperando el código.")
-             codeRejector(err)
-             codeRejector = null
-             codeResolver = null
-        }
-    }, 60000)
-
-    // IMPORTANT: Structure matches sockets-serbot.js
     exec(comb.toString("utf-8"), async (err, stdout, stderr) => {
-        const drmer = Buffer.from(drm1 + drm2, `base64`)
-        let { version, isLatest } = await fetchLatestBaileysVersion()
-        const msgRetry = (MessageRetryMap) => { }
+        let { version } = await fetchLatestBaileysVersion()
+        const { state, saveCreds } = await useMultiFileAuthState(pathYukiJadiBot)
         const msgRetryCache = new NodeCache()
-        const { state, saveState, saveCreds } = await useMultiFileAuthState(pathYukiJadiBot)
-
-        // Custom logger to capture logs for web view, but mimicking the level from serbot
-        const pinoLogger = pino({ level: "fatal" })
-        addLog(id, "Iniciando proceso de conexión...")
 
         const connectionOptions = {
-            logger: pinoLogger,
+            logger: pino({ level: "silent" }),
             printQRInTerminal: false,
             auth: { creds: state.creds, keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' })) },
-            msgRetry,
-            msgRetryCache,
-            browser: ['Windows', 'Firefox'],
+            browser: ['MayBot-Web', 'Chrome', '1.0.0'],
             version: version,
-            generateHighQualityLinkPreview: true
+            msgRetryCache
         }
 
         let sock = makeWASocket(connectionOptions)
         sock.isInit = false
-        let isInit = true
-
-        setTimeout(async () => {
-            if (!sock.user) {
-                try { fs.rmSync(pathYukiJadiBot, { recursive: true, force: true }) } catch { }
-                try { sock.ws?.close() } catch { }
-                sock.ev.removeAllListeners()
-                let i = global.conns.indexOf(sock)
-                if (i >= 0) global.conns.splice(i, 1)
-                deleteSubbotOwner(id)
-                addLog(id, "Sesión eliminada por falta de conexión (Auto-limpieza).")
-                console.log(`[AUTO-LIMPIEZA] Sesión ${path.basename(pathYukiJadiBot)} eliminada credenciales invalidos.`)
-            }
-        }, 60000)
+        sock.localConfig = localConfig
 
         async function connectionUpdate(update) {
-            const { connection, lastDisconnect, isNewLogin, qr } = update
-            if (isNewLogin) sock.isInit = false
-
-            if (qr) {
-                addLog(id, "QR recibido, solicitando código de emparejamiento...")
-                if (codeResolver && !sock.authState.creds.me) {
-                     try {
-                        let secret = await sock.requestPairingCode(id)
-                        secret = secret.match(/.{1,4}/g)?.join("-")
-                        addLog(id, `Código recibido: ${secret}`)
-                        clearTimeout(timeout)
-                        codeResolver(secret)
-                        codeResolver = null
-                        codeRejector = null
-                     } catch (e) {
-                        addLog(id, `Error al pedir código: ${e.message}`)
-                        clearTimeout(timeout)
-                        if (codeRejector) codeRejector(e)
-                        codeResolver = null
-                        codeRejector = null
-                     }
-                }
+            const { connection, lastDisconnect, qr } = update
+            
+            if (qr && codeResolver && !sock.authState.creds.me) {
+                try {
+                    let secret = await sock.requestPairingCode(id)
+                    codeResolver(secret.match(/.{1,4}/g)?.join("-"))
+                } catch (e) { codeRejector(e) }
             }
 
-            const endSesion = async (loaded) => {
-                if (!loaded) {
-                    try {
-                        sock.ws.close()
-                    } catch {}
-                    sock.ev.removeAllListeners()
-                    let i = global.conns.indexOf(sock)
-                    if (i < 0) return
-                    delete global.conns[i]
-                    global.conns.splice(i, 1)
-                }
-            }
-
-            const reason = lastDisconnect?.error?.output?.statusCode || lastDisconnect?.error?.output?.payload?.statusCode
-
-            // Error handling exactly as in sockets-serbot.js
-            if (connection === 'close') {
-                 addLog(id, `Conexión cerrada. Razón: ${reason}`)
-
-                 if (reason === 428) {
-                     console.log(chalk.bold.magentaBright(`\n╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄ • • • ┄┄┄┄┄┄┄┄┄┄┄┄┄┄⟡\n┆ La conexión (+${path.basename(pathYukiJadiBot)}) fue cerrada inesperadamente. Intentando reconectar...\n╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄ • • • ┄┄┄┄┄┄┄┄┄┄┄┄┄┄⟡`))
-                     addLog(id, "Conexión cerrada inesperadamente. Reconectando...")
-                     await creloadHandler(true).catch(console.error)
-                 }
-                 if (reason === 408) {
-                    console.log(chalk.bold.magentaBright(`\n╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄ • • • ┄┄┄┄┄┄┄┄┄┄┄┄┄┄⟡\n┆ La conexión (+${path.basename(pathYukiJadiBot)}) se perdió o expiró. Razón: ${reason}. Intentando reconectar...\n╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄ • • • ┄┄┄┄┄┄┄┄┄┄┄┄┄┄⟡`))
-                    addLog(id, "Conexión perdida o expirada. Reconectando...")
-                    await creloadHandler(true).catch(console.error)
-                 }
-                 if (reason === 440) {
-                    console.log(chalk.bold.magentaBright(`\n╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄ • • • ┄┄┄┄┄┄┄┄┄┄┄┄┄┄⟡\n┆ La conexión (+${path.basename(pathYukiJadiBot)}) fue reemplazada por otra sesión activa.\n╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄ • • • ┄┄┄┄┄┄┄┄┄┄┄┄┄┄⟡`))
-                    addLog(id, "La sesión fue reemplazada por otra activa.")
-                 }
-                 if (reason == 405 || reason == 401) {
-                     console.log(chalk.bold.magentaBright(`\n╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄ • • • ┄┄┄┄┄┄┄┄┄┄┄┄┄┄⟡\n┆ La sesión (+${path.basename(pathYukiJadiBot)}) fue cerrada. Credenciales no válidas o dispositivo desconectado manualmente.\n╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄ • • • ┄┄┄┄┄┄┄┄┄┄┄┄┄┄⟡`))
-                     addLog(id, "Credenciales inválidas o desconectado. Eliminando sesión.")
-                     deleteSubbotOwner(id)
-                     fs.rmdirSync(pathYukiJadiBot, { recursive: true })
-                 }
-                 if (reason === 500) {
-                     console.log(chalk.bold.magentaBright(`\n╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄ • • • ┄┄┄┄┄┄┄┄┄┄┄┄┄┄⟡\n┆ Conexión perdida en la sesión (+${path.basename(pathYukiJadiBot)}). Borrando datos...\n╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄ • • • ┄┄┄┄┄┄┄┄┄┄┄┄┄┄⟡`))
-                     addLog(id, "Error 500. Reintentando...")
-                     return creloadHandler(true).catch(console.error)
-                 }
-                 if (reason === 515) {
-                    console.log(chalk.bold.magentaBright(`\n╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄ • • • ┄┄┄┄┄┄┄┄┄┄┄┄┄┄⟡\n┆ Reinicio automático para la sesión (+${path.basename(pathYukiJadiBot)}).\n╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄ • • • ┄┄┄┄┄┄┄┄┄┄┄┄┄┄⟡`))
-                    addLog(id, "Reinicio automático necesario.")
-                    await creloadHandler(true).catch(console.error)
-                 }
-                 if (reason === 403) {
-                     console.log(chalk.bold.magentaBright(`\n╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄ • • • ┄┄┄┄┄┄┄┄┄┄┄┄┄┄⟡\n┆ Sesión cerrada o cuenta en soporte para la sesión (+${path.basename(pathYukiJadiBot)}).\n╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄ • • • ┄┄┄┄┄┄┄┄┄┄┄┄┄┄⟡`))
-                     addLog(id, "Sesión cerrada o cuenta en soporte. Eliminando.")
-                     fs.rmdirSync(pathYukiJadiBot, { recursive: true })
-                 }
-            }
-
-            if (global.db.data == null) loadDatabase()
-
-            if (connection == `open`) {
-                if (!global.db.data?.users) loadDatabase()
-                await joinChannels(sock)
-                let userName = sock.authState.creds.me.name || 'Anónimo'
-                let userJid = sock.authState.creds.me.jid || `${path.basename(pathYukiJadiBot)}@s.whatsapp.net`
-                addLog(id, `¡Conectado exitosamente como ${userName}!`)
-                console.log(chalk.bold.cyanBright(`\n❒⸺⸺⸺⸺【• SUB-BOT WEB •】⸺⸺⸺⸺❒\n│\n│ ❍ ${userName} (+${path.basename(pathYukiJadiBot)}) conectado exitosamente.\n│\n❒⸺⸺⸺【• CONECTADO •】⸺⸺⸺❒`))
+            if (connection === 'open') {
                 sock.isInit = true
                 global.conns.push(sock)
+                subbotStats.set(id, { messagesSent: 0, connectedAt: new Date() })
+                addLog(id, "Conectado exitosamente.")
+                if (codeResolver) codeResolver(null)
+            }
 
-                if (codeResolver) {
-                     codeResolver(null)
-                     codeResolver = null
-                     clearTimeout(timeout)
+            if (connection === 'close') {
+                const reason = lastDisconnect?.error?.output?.statusCode
+                addLog(id, `Desconectado: ${reason}`)
+                if (reason !== DisconnectReason.loggedOut) {
+                    setTimeout(() => startSubBot(id, ownerUsername), 5000)
+                } else {
+                    deleteSubbotOwner(id)
+                    if (fs.existsSync(pathYukiJadiBot)) fs.rmSync(pathYukiJadiBot, { recursive: true })
                 }
             }
-
-            setInterval(async () => {
-                if (!sock.user) {
-                    try { sock.ws.close() } catch (e) {}
-                    sock.ev.removeAllListeners()
-                    let i = global.conns.indexOf(sock)
-                    if (i < 0) return
-                    delete global.conns[i]
-                    global.conns.splice(i, 1)
-                }}, 60000)
-        } // End connectionUpdate
-
-        let handler = await import('../handler.js')
-        let creloadHandler = async function (restatConn) {
-            try {
-                const Handler = await import(`../handler.js?update=${Date.now()}`).catch(console.error)
-                if (Object.keys(Handler || {}).length) handler = Handler
-            } catch (e) {
-                console.error('⚠︎ Nuevo error: ', e)
-            }
-            if (restatConn) {
-                const oldChats = sock.chats
-                try { sock.ws.close() } catch { }
-                sock.ev.removeAllListeners()
-                sock = makeWASocket(connectionOptions, { chats: oldChats })
-                isInit = true
-            }
-            if (!isInit) {
-                sock.ev.off("messages.upsert", sock.handler)
-                sock.ev.off("connection.update", sock.connectionUpdate)
-                sock.ev.off('creds.update', sock.credsUpdate)
-            }
-            sock.handler = handler.handler.bind(sock)
-            sock.connectionUpdate = connectionUpdate.bind(sock)
-            sock.credsUpdate = saveCreds.bind(sock, true)
-            sock.ev.on("messages.upsert", sock.handler)
-            sock.ev.on("connection.update", sock.connectionUpdate)
-            sock.ev.on("creds.update", sock.credsUpdate)
-            isInit = false
-            return true
         }
 
-        creloadHandler(false)
+        sock.ev.on('connection.update', connectionUpdate)
+        sock.ev.on('creds.update', saveCreds)
+        sock.ev.on('messages.upsert', async (m) => {
+            if (m.type === 'append' || m.type === 'notify') {
+                const stats = subbotStats.get(id) || { messagesSent: 0 }
+                stats.messagesSent++
+                subbotStats.set(id, stats)
+            }
+            const handler = await import('../handler.js')
+            handler.handler.call(sock, m)
+        })
     })
-
     return codePromise
 }
 
-async function joinChannels(sock) {
-    if (!global.ch) return
-    for (const value of Object.values(global.ch)) {
-        if (typeof value === 'string' && value.endsWith('@newsletter')) {
-            await sock.newsletterFollow(value).catch(() => {})
-        }
-    }
+const checkAuth = (req, res, next) => {
+    if (!req.signedCookies.user) return res.redirect('/login')
+    const user = getUsers().find(u => u.username === req.signedCookies.user)
+    if (!user || user.status === 'suspended') return res.clearCookie('user').redirect('/login')
+    req.user = user
+    next()
 }
 
-// --- API Routes ---
+const checkRole = (roles) => (req, res, next) => {
+    if (roles.includes(req.user.role)) return next()
+    res.status(403).json({ error: 'Acceso denegado' })
+}
 
-app.get('/', (req, res) => {
-    if (req.signedCookies.user) {
-        res.redirect('/dashboard')
-    } else {
-        res.redirect('/login')
-    }
-})
-
-app.get('/login', (req, res) => {
-    res.render('login', { error: null })
-})
-
+app.get('/login', (req, res) => res.render('login', { error: null }))
 app.post('/login', (req, res) => {
     const { username, password } = req.body
-    const user = findUser(username)
-    if (user && bcrypt.compareSync(password, user.password)) {
+    const user = getUsers().find(u => u.username === username)
+    if (user && bcrypt.compareSync(password, user.password) && user.status === 'active') {
         res.cookie('user', username, { signed: true, httpOnly: true })
         res.redirect('/dashboard')
-    } else {
-        res.render('login', { error: 'Credenciales inválidas' })
-    }
+    } else res.render('login', { error: 'Credenciales inválidas o cuenta suspendida' })
 })
 
-app.get('/register', (req, res) => {
-    res.render('register', { error: null })
+app.get('/dashboard', checkAuth, (req, res) => {
+    const totalSubbots = global.conns.length
+    res.render('dashboard', { user: req.user, totalSubbots })
 })
 
-app.post('/register', (req, res) => {
-    const { username, password } = req.body
-    if (findUser(username)) {
-        res.render('register', { error: 'El usuario ya existe' })
-    } else {
-        const hashedPassword = bcrypt.hashSync(password, 10)
-        saveUser({ username, password: hashedPassword })
-        res.redirect('/login')
-    }
-})
-
-app.get('/dashboard', (req, res) => {
-    if (!req.signedCookies.user) return res.redirect('/login')
-
-    // Calculate total active subbots globally
-    const totalSubbots = global.conns.filter(sock => sock?.user).length
-
-    res.render('dashboard', {
-        username: req.signedCookies.user,
-        totalSubbots: totalSubbots
+app.get('/api/system-stats', checkAuth, (req, res) => {
+    res.json({
+        ram: {
+            total: (os.totalmem() / 1024 / 1024 / 1024).toFixed(2) + ' GB',
+            free: (os.freemem() / 1024 / 1024 / 1024).toFixed(2) + ' GB',
+            usage: ((1 - os.freemem() / os.totalmem()) * 100).toFixed(2) + '%'
+        },
+        cpu: os.cpus()[0].model,
+        uptime: os.uptime(),
+        platform: os.platform()
     })
 })
 
-// API to get user's subbots
-app.get('/api/my-subbots', (req, res) => {
-    if (!req.signedCookies.user) return res.status(401).json({ error: 'Unauthorized' })
-    const username = req.signedCookies.user
+app.get('/api/my-subbots', checkAuth, (req, res) => {
     const owners = getSubbotOwners()
-
     const mySubbots = global.conns
-        .filter(sock => sock.user && sock.user.jid)
+        .filter(sock => sock.user)
         .map(sock => {
             const id = sock.user.jid.split('@')[0]
+            const stats = subbotStats.get(id) || {}
             return {
-                id: id,
-                name: sock.user.name || 'SubBot',
-                jid: sock.user.jid
+                id,
+                name: sock.localConfig?.botname || 'MayBot',
+                jid: sock.user.jid,
+                owner: owners[id],
+                stats: stats
             }
         })
-        .filter(bot => owners[bot.id] === username)
-
+        .filter(bot => req.user.role === 'owner' || req.user.role === 'admin' || bot.owner === req.user.username)
     res.json(mySubbots)
 })
 
-// API to get logs (deprecated, but kept for compatibility if needed, though UI won't use it)
-app.get('/api/subbot-logs/:id', (req, res) => {
-    if (!req.signedCookies.user) return res.status(401).json({ error: 'Unauthorized' })
-    const { id } = req.params
+app.post('/api/subbot/action', checkAuth, async (req, res) => {
+    const { id, action } = req.body
     const owners = getSubbotOwners()
+    if (req.user.role !== 'owner' && owners[id] !== req.user.username) return res.status(403).json({ error: 'No autorizado' })
 
-    if (owners[id] !== req.signedCookies.user) {
-        return res.status(403).json({ error: 'No tienes permiso para ver estos logs' })
-    }
-
-    const logs = subbotLogs.get(id) || []
-    res.json({ logs })
-})
-
-// API to get subbot config
-app.get('/api/subbot-config/:id', (req, res) => {
-    if (!req.signedCookies.user) return res.status(401).json({ error: 'Unauthorized' })
-    const { id } = req.params
-    const owners = getSubbotOwners()
-
-    if (owners[id] !== req.signedCookies.user) {
-        return res.status(403).json({ error: 'No tienes permiso' })
-    }
-
-    const configPath = path.join(getSessionPath(id), 'config.json')
-    let config = {}
-    if (fs.existsSync(configPath)) {
-        try {
-            config = JSON.parse(fs.readFileSync(configPath))
-        } catch (e) {}
-    }
-    res.json(config)
-})
-
-// API to save subbot config
-app.post('/api/subbot-config/:id', upload.single('banner'), async (req, res) => {
-    if (!req.signedCookies.user) return res.status(401).json({ error: 'Unauthorized' })
-    const { id } = req.params
-    const owners = getSubbotOwners()
-
-    if (owners[id] !== req.signedCookies.user) {
-        return res.status(403).json({ error: 'No tienes permiso' })
-    }
-
-    const configPath = path.join(getSessionPath(id), 'config.json')
-    let config = {}
-    if (fs.existsSync(configPath)) {
-        try {
-            config = JSON.parse(fs.readFileSync(configPath))
-        } catch (e) {}
-    }
-
-    if (req.body.name) {
-        config.name = req.body.name.trim()
-    }
-
-    if (req.file) {
-        const url = await uploadToFreeImageHost(req.file.buffer)
-        if (url) {
-            config.banner = url
-        } else {
-            return res.status(500).json({ error: 'Error al subir la imagen' })
+    const sockIdx = global.conns.findIndex(s => s.user?.jid.split('@')[0] === id)
+    
+    if (action === 'stop' || action === 'restart') {
+        if (sockIdx > -1) {
+            try { global.conns[sockIdx].ws.close() } catch {}
+            global.conns.splice(sockIdx, 1)
         }
     }
 
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2))
-    res.json({ success: true, config })
-})
-
-// API to stop subbot
-app.post('/api/stop-subbot', (req, res) => {
-    if (!req.signedCookies.user) return res.status(401).json({ error: 'Unauthorized' })
-    const { id } = req.body
-    const owners = getSubbotOwners()
-
-    if (owners[id] !== req.signedCookies.user) {
-        return res.status(403).json({ error: 'No tienes permiso para detener este bot' })
+    if (action === 'start' || action === 'restart') {
+        await startSubBot(id, owners[id] || req.user.username)
     }
 
-    const sockIndex = global.conns.findIndex(s => s.user?.jid.split('@')[0] === id)
-    if (sockIndex >= 0) {
-        try {
-            global.conns[sockIndex].ws.close()
-        } catch {}
-        global.conns.splice(sockIndex, 1)
+    if (action === 'delete' && req.user.role === 'owner') {
+        const pathBot = getSessionPath(id)
+        if (fs.existsSync(pathBot)) fs.rmSync(pathBot, { recursive: true })
+        deleteSubbotOwner(id)
     }
 
-    const pathYukiJadiBot = getSessionPath(id)
-    try {
-        if (fs.existsSync(pathYukiJadiBot)) {
-            fs.rmSync(pathYukiJadiBot, { recursive: true, force: true })
-        }
-    } catch(e) {
-        console.error(e)
-    }
-
-    deleteSubbotOwner(id)
-    addLog(id, "Bot detenido y eliminado por el usuario.")
     res.json({ success: true })
 })
 
-app.post('/request-code', async (req, res) => {
-    if (!req.signedCookies.user) return res.redirect('/login')
+app.post('/api/subbot/config/:id', checkAuth, upload.fields([{ name: 'banner' }, { name: 'icono' }]), async (req, res) => {
+    const { id } = req.params
+    const owners = getSubbotOwners()
+    if (req.user.role !== 'owner' && owners[id] !== req.user.username) return res.status(403).json({ error: 'No autorizado' })
+
+    const configPath = path.join(getSessionPath(id), 'config.json')
+    let config = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath)) : {}
+
+    if (req.body.botname) config.botname = req.body.botname
+    if (req.files['banner']) config.banner = await uploadToFreeImageHost(req.files['banner'][0].buffer)
+    if (req.files['icono']) config.icono = await uploadToFreeImageHost(req.files['icono'][0].buffer)
+    
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2))
+    const sock = global.conns.find(s => s.user?.jid.split('@')[0] === id)
+    if (sock) sock.localConfig = config
+
+    res.json({ success: true, config })
+})
+
+app.get('/api/admin/users', checkAuth, checkRole(['owner', 'admin']), (req, res) => {
+    res.json(getUsers().map(u => ({ username: u.username, role: u.role, status: u.status })))
+})
+
+app.post('/api/admin/users', checkAuth, checkRole(['owner']), (req, res) => {
+    const { username, password, role, permissions } = req.body
+    const users = getUsers()
+    if (users.find(u => u.username === username)) return res.status(400).json({ error: 'Usuario existe' })
+    
+    users.push({
+        username,
+        password: bcrypt.hashSync(password, 10),
+        role: role || 'user',
+        status: 'active',
+        permissions: permissions || []
+    })
+    saveUsers(users)
+    res.json({ success: true })
+})
+
+app.post('/api/admin/users/update', checkAuth, checkRole(['owner']), (req, res) => {
+    const { username, status, role, password } = req.body
+    const users = getUsers()
+    const idx = users.findIndex(u => u.username === username)
+    if (idx === -1) return res.status(404).json({ error: 'No encontrado' })
+
+    if (status) users[idx].status = status
+    if (role) users[idx].role = role
+    if (password) users[idx].password = bcrypt.hashSync(password, 10)
+
+    saveUsers(users)
+    res.json({ success: true })
+})
+
+app.post('/request-code', checkAuth, async (req, res) => {
     const { phoneNumber } = req.body
-
-    if (!phoneNumber) return res.json({ error: "Número inválido" })
-
+    if (!phoneNumber) return res.json({ error: "Número requerido" })
     try {
-        const code = await startSubBot(phoneNumber, req.signedCookies.user)
-        res.json({ success: true, code: code })
-    } catch (e) {
-        console.error(e)
-        res.json({ success: false, error: e.message })
-    }
+        const code = await startSubBot(phoneNumber, req.user.username)
+        res.json({ success: true, code })
+    } catch (e) { res.json({ success: false, error: e.message }) }
 })
 
-app.get('/logout', (req, res) => {
-    res.clearCookie('user')
-    res.redirect('/login')
-})
-
-// Start server
-app.listen(PORT, () => {
-    console.log(chalk.green(`Web Interface running on http://localhost:${PORT}`))
-})
+app.listen(PORT, () => console.log(chalk.green(`MayBot Web Interface: http://localhost:${PORT}`)))
 
 export default {
     tags: ['main'],
     command: ['web'],
     help: ['web'],
     handler: (m) => {
-        m.reply(`Panel web activo en el puerto ${PORT}`)
+        m.reply(`Panel MayBot activo en el puerto ${PORT}`)
     }
 }
