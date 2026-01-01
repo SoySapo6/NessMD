@@ -1,12 +1,14 @@
 {
-  "name": "YukiBot-MD",
-  "version": "1.8.2",
+  "name": "MayBot",
+  "version": "1.0.0",
   "description": "WhatsApp Bot Multi Device",
   "main": "index.js",
   "type": "module",
   "directories": {
     "lib": "lib",
-    "plugins": "plugins"
+    "plugins": "plugins",
+    "views": "lib/views",
+    "database": "database"
   },
   "scripts": {
     "start": "node index.js"
@@ -15,16 +17,16 @@
     "type": "git",
     "url": "git+https://github.com/The-King-Destroy/YukiBot-MD.git"
   },
-  "author": "The-King-Destroy",
+  "author": "SoyMaycol",
   "license": "MIT-License",
   "bugs": {
-    "url": "https://github.com/The-King-Destroy/YukiBot-MD/issues"
+    "url": "https://github.com/SoySapo6/MayBot/issues"
   },
-  "homepage": "https://github.com/The-King-Destroy/YukiBot-MD#readme",
+  "homepage": "https://github.com/SoySapo6/MayBot/#readme",
   "dependencies": {
     "@hapi/boom": "^10.0.1",
     "@vitalets/google-translate-api": "^8.0.0",
-    "@whiskeysockets/baileys": "github:Ado21/bly",
+    "@whiskeysockets/baileys": "npm:@soymaycol/baileys",
     "acrcloud": "^1.4.0",
     "aptoide-scraper": "github:DIEGO-OFC/dv-aptoide-scraper",
     "awesome-phonenumber": "^3.4.0",
