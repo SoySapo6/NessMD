@@ -44,8 +44,8 @@ const subbotOwnershipFile = path.join(process.cwd(), 'database', 'web_subbots.js
 if (!fs.existsSync(path.dirname(usersFile))) fs.mkdirSync(path.dirname(usersFile), { recursive: true })
 if (!fs.existsSync(usersFile)) {
     const initialOwner = {
-        username: 'admin',
-        password: bcrypt.hashSync('admin123', 10),
+        username: global.userowner,
+        password: bcrypt.hashSync(global.passowner, 10),
         role: 'owner',
         status: 'active',
         permissions: ['all']
