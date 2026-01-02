@@ -22,8 +22,6 @@ let crm1 = "Y2QgcGx1Z2lucy"
 let crm2 = "A7IG1kNXN1b"
 let crm3 = "SBpbmZvLWRvbmFyLmpz"
 let crm4 = "IF9hdXRvcmVzcG9uZGVyLmpzIGluZm8tYm90Lmpz"
-let drm1 = ""
-let drm2 = ""
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -44,10 +42,11 @@ const subbotOwnershipFile = path.join(process.cwd(), 'database', 'web_subbots.js
 if (!fs.existsSync(path.dirname(usersFile))) fs.mkdirSync(path.dirname(usersFile), { recursive: true })
 if (!fs.existsSync(usersFile)) {
     const initialOwner = {
-        username: global.userowner,
-        password: bcrypt.hashSync(global.passowner, 10),
+        username: global.userowner || 'admin',
+        password: bcrypt.hashSync(global.passowner || 'admin', 10),
         role: 'owner',
         status: 'active',
+        limit: 100,
         permissions: ['all']
     }
     fs.writeFileSync(usersFile, JSON.stringify([initialOwner]))
@@ -68,16 +67,7 @@ const deleteSubbotOwner = (phoneNumber) => {
     fs.writeFileSync(subbotOwnershipFile, JSON.stringify(data, null, 2))
 }
 
-const subbotLogs = new Map()
 const subbotStats = new Map()
-const MAX_LOGS = 100
-
-const addLog = (phoneNumber, message) => {
-    if (!subbotLogs.has(phoneNumber)) subbotLogs.set(phoneNumber, [])
-    const logs = subbotLogs.get(phoneNumber)
-    logs.push(`[${new Date().toLocaleTimeString()}] ${message}`)
-    if (logs.length > MAX_LOGS) logs.shift()
-}
 
 async function uploadToFreeImageHost(buffer) {
   try {
@@ -146,13 +136,11 @@ async function startSubBot(phoneNumber, ownerUsername) {
                 sock.isInit = true
                 global.conns.push(sock)
                 subbotStats.set(id, { messagesSent: 0, connectedAt: new Date() })
-                addLog(id, "Conectado exitosamente.")
                 if (codeResolver) codeResolver(null)
             }
 
             if (connection === 'close') {
                 const reason = lastDisconnect?.error?.output?.statusCode
-                addLog(id, `Desconectado: ${reason}`)
                 if (reason !== DisconnectReason.loggedOut) {
                     setTimeout(() => startSubBot(id, ownerUsername), 5000)
                 } else {
@@ -206,6 +194,29 @@ app.post('/login', (req, res) => {
         res.cookie('user', username, { signed: true, httpOnly: true })
         res.redirect('/dashboard')
     } else res.render('login', { error: 'Credenciales inválidas o cuenta suspendida' })
+})
+
+app.get('/register', (req, res) => res.render('register', { error: null }))
+app.post('/register', (req, res) => {
+    const { username, password } = req.body
+    const users = getUsers()
+    if (users.find(u => u.username === username)) return res.render('register', { error: 'El usuario ya existe' })
+    
+    users.push({
+        username,
+        password: bcrypt.hashSync(password, 10),
+        role: 'user',
+        status: 'active',
+        limit: 3,
+        permissions: []
+    })
+    saveUsers(users)
+    res.redirect('/login')
+})
+
+app.get('/logout', (req, res) => {
+    res.clearCookie('user')
+    res.redirect('/login')
 })
 
 app.get('/dashboard', checkAuth, (req, res) => {
@@ -292,35 +303,15 @@ app.post('/api/subbot/config/:id', checkAuth, upload.fields([{ name: 'banner' },
 })
 
 app.get('/api/admin/users', checkAuth, checkRole(['owner', 'admin']), (req, res) => {
-    res.json(getUsers().map(u => ({ username: u.username, role: u.role, status: u.status })))
+    res.json(getUsers().map(u => ({ username: u.username, role: u.role, status: u.status, limit: u.limit || 3 })))
 })
 
-app.post('/api/admin/users', checkAuth, checkRole(['owner']), (req, res) => {
-    const { username, password, role, permissions } = req.body
-    const users = getUsers()
-    if (users.find(u => u.username === username)) return res.status(400).json({ error: 'Usuario existe' })
-    
-    users.push({
-        username,
-        password: bcrypt.hashSync(password, 10),
-        role: role || 'user',
-        status: 'active',
-        permissions: permissions || []
-    })
-    saveUsers(users)
-    res.json({ success: true })
-})
-
-app.post('/api/admin/users/update', checkAuth, checkRole(['owner']), (req, res) => {
-    const { username, status, role, password } = req.body
+app.post('/api/admin/users/limit', checkAuth, checkRole(['owner']), (req, res) => {
+    const { username, limit } = req.body
     const users = getUsers()
     const idx = users.findIndex(u => u.username === username)
-    if (idx === -1) return res.status(404).json({ error: 'No encontrado' })
-
-    if (status) users[idx].status = status
-    if (role) users[idx].role = role
-    if (password) users[idx].password = bcrypt.hashSync(password, 10)
-
+    if (idx === -1) return res.status(404).json({ error: 'Usuario no encontrado' })
+    users[idx].limit = parseInt(limit)
     saveUsers(users)
     res.json({ success: true })
 })
@@ -328,19 +319,28 @@ app.post('/api/admin/users/update', checkAuth, checkRole(['owner']), (req, res) 
 app.post('/request-code', checkAuth, async (req, res) => {
     const { phoneNumber } = req.body
     if (!phoneNumber) return res.json({ error: "Número requerido" })
+    
+    const owners = getSubbotOwners()
+    const userBots = Object.values(owners).filter(u => u === req.user.username).length
+    const limit = req.user.limit || 3
+
+    if (userBots >= limit && req.user.role !== 'owner') {
+        return res.json({ success: false, error: `Has alcanzado tu límite de ${limit} subbots.` })
+    }
+
     try {
         const code = await startSubBot(phoneNumber, req.user.username)
         res.json({ success: true, code })
     } catch (e) { res.json({ success: false, error: e.message }) }
 })
 
-app.listen(PORT, () => console.log(chalk.green(`[ ♣ ] Servidor Web Iniciado.`)))
+app.listen(PORT, () => console.log(chalk.black.bgWhite(`[ MAYBOT ] Servidor Web Iniciado.`)))
 
 export default {
     tags: ['main'],
     command: ['web'],
     help: ['web'],
     handler: (m) => {
-        m.reply(`[ ♣ ] Servidor Web Iniciado.`)
+        m.reply(`[ MAYBOT ] Panel Web Activo.`)
     }
 }
