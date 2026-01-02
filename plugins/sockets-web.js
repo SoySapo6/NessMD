@@ -113,7 +113,7 @@ async function startSubBot(phoneNumber, ownerUsername) {
             logger: pino({ level: "silent" }),
             printQRInTerminal: false,
             auth: { creds: state.creds, keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' })) },
-            browser: ['MayBot-Web', 'Chrome', '1.0.0'],
+            browser: ['Windows', 'Firefox'],
             version: version,
             msgRetryCache,
             generateHighQualityLinkPreview: true
