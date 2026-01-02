@@ -115,12 +115,23 @@ async function startSubBot(phoneNumber, ownerUsername) {
             auth: { creds: state.creds, keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' })) },
             browser: ['MayBot-Web', 'Chrome', '1.0.0'],
             version: version,
-            msgRetryCache
+            msgRetryCache,
+            generateHighQualityLinkPreview: true
         }
 
         let sock = makeWASocket(connectionOptions)
         sock.isInit = false
         sock.localConfig = localConfig
+
+        setTimeout(async () => {
+            if (!sock.user) {
+                try { sock.ws?.close() } catch {}
+                sock.ev.removeAllListeners()
+                let i = global.conns.indexOf(sock)
+                if (i >= 0) global.conns.splice(i, 1)
+                if (codeRejector) codeRejector(new Error('Tiempo de espera agotado'))
+            }
+        }, 60000)
 
         async function connectionUpdate(update) {
             const { connection, lastDisconnect, qr } = update
@@ -129,7 +140,10 @@ async function startSubBot(phoneNumber, ownerUsername) {
                 try {
                     let secret = await sock.requestPairingCode(id)
                     codeResolver(secret.match(/.{1,4}/g)?.join("-"))
-                } catch (e) { codeRejector(e) }
+                    codeResolver = null 
+                } catch (e) { 
+                    codeRejector(e) 
+                }
             }
 
             if (connection === 'open') {
@@ -142,10 +156,11 @@ async function startSubBot(phoneNumber, ownerUsername) {
             if (connection === 'close') {
                 const reason = lastDisconnect?.error?.output?.statusCode
                 if (reason !== DisconnectReason.loggedOut) {
-                    setTimeout(() => startSubBot(id, ownerUsername), 5000)
+                   
                 } else {
                     deleteSubbotOwner(id)
-                    if (fs.existsSync(pathYukiJadiBot)) fs.rmSync(pathYukiJadiBot, { recursive: true })
+                    try { fs.rmSync(pathYukiJadiBot, { recursive: true }) } catch {}
+                    sock.ev.removeAllListeners()
                 }
             }
         }
@@ -158,8 +173,10 @@ async function startSubBot(phoneNumber, ownerUsername) {
                 stats.messagesSent++
                 subbotStats.set(id, stats)
             }
-            const handler = await import('../handler.js')
-            handler.handler.call(sock, m)
+            try {
+                const handler = await import('../handler.js')
+                handler.handler.call(sock, m)
+            } catch (e) {}
         })
     })
     return codePromise
