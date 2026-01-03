@@ -3,120 +3,134 @@ import fetch from 'node-fetch'
 import { FormData, Blob } from 'formdata-node'
 import { fileTypeFromBuffer } from 'file-type'
 import crypto from 'crypto'
+import fs from 'fs'
+import path from 'path'
+import os from 'os'
 import axios from 'axios'
-import cheerio from 'cheerio'
-import qs from 'qs'
 import { CookieJar } from 'tough-cookie'
 import { wrapper } from 'axios-cookiejar-support'
+import cheerio from 'cheerio'
+import qs from 'qs'
 
-const toStyled = (text) => {
-const normal = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-const styled = "αႦƈԃҽϝɠԋιʝƙʅɱɳσρϙɾʂƚυʋɯxყȥABCDEFGHIJKLMNOPQRSTUVWXYZ"
-return text.split('').map(char => {
-const i = normal.indexOf(char)
-return i !== -1 ? styled[i] : char
-}).join('')
-}
+const handler = async (m, { conn, command, usedPrefix, args }) => {
+    try {
+        let q = m.quoted ? m.quoted : m
+        let mime = (q.msg || q).mimetype || ''
+        if (!mime) return conn.reply(m.chat, '⊱┊ ℙ𝕠𝕣 𝕗𝕒𝕧𝕠𝕣 𝕣𝕖𝕤𝕡𝕠𝕟𝕕𝕖 𝕒 𝕦𝕟 𝕒𝕣𝕔𝕙𝕚𝕧𝕠 𝕠 𝕚𝕞𝕒𝕘𝕖𝕟', m)
 
-const handler = async (m, { conn, command, usedPrefix, text, args }) => {
-try {
-let q = m.quoted ? m.quoted : m
-let mime = (q.msg || q).mimetype || ''
-if (!mime) return conn.reply(m.chat, toStyled('por favor responde a una imagen o video'), m)
+        const toStyled = (text) => {
+            const normal = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            const styled = "αႦƈԃҽϝɠԋιʝƙʅɱɳσρϙɾʂƚυʋɯxყȥΑΒCDEFGHIJKLMNOPQRSTUVWXYZ"
+            return text.split('').map(char => {
+                let i = normal.indexOf(char)
+                return i !== -1 ? styled[i] : char
+            }).join('')
+        }
 
-await m.react('🕒')
-const media = await q.download()
-const isTele = /image\/(png|jpe?g|gif)|video\/mp4/.test(mime)
-const fileSize = formatBytes(media.length)
+        if (!args[0]) {
+            const sections = [
+                {
+                    title: "⊱┊ 𝕊𝕖𝕣𝕧𝕚𝕔𝕚𝕠𝕤 𝕕𝕖 𝕀𝕞𝕒𝕘𝕖𝕟",
+                    rows: [
+                        { title: "ℂ𝕒𝕥𝕓𝕠𝕩", rowId: `${usedPrefix}${command} catbox`, description: "𝕊𝕦𝕓𝕚𝕕𝕒 𝕣𝕒𝕡𝕚𝕕𝕒 𝕤𝕚𝕟 𝕖𝕩𝕡𝕚𝕣𝕒𝕔𝕚𝕠𝕟" },
+                        { title: "𝕎ℙ𝔽𝕒𝕤𝕥𝕖𝕤𝕥", rowId: `${usedPrefix}${command} wpfastest`, description: "𝕊𝕠𝕝𝕠 𝕀𝕞𝕒𝕘𝕖𝕟𝕖𝕤" },
+                        { title: "𝕋𝕖𝕝𝕖𝕘𝕣𝕒𝕡𝕙", rowId: `${usedPrefix}${command} telegraph`, description: "ℂ𝕝𝕒𝕤𝕚𝕔𝕠" }
+                    ]
+                },
+                {
+                    title: "⊱┊ 𝕊𝕖𝕣𝕧𝕚𝕔𝕚𝕠𝕤 𝕕𝕖 𝔸𝕣𝕔𝕙𝕚𝕧𝕠𝕤",
+                    rows: [
+                        { title: "𝕄𝕖𝕕𝕚𝕒𝕗𝕚𝕣𝕖", rowId: `${usedPrefix}${command} mediafire`, description: "𝔸𝕣𝕔𝕙𝕚𝕧𝕠𝕤 𝕕𝕖 𝕔𝕦𝕒𝕝𝕢𝕦𝕚𝕖𝕣 𝕥𝕚𝕡𝕠" },
+                        { title: "𝕃𝕚𝕥𝕥𝕖𝕣𝔹𝕠𝕩", rowId: `${usedPrefix}${command} litter`, description: "𝕋𝕖𝕞𝕡𝕠𝕣𝕒𝕝" },
+                        { title: "ℕ𝕖𝕧𝕖𝕝𝕠𝕠𝕡", rowId: `${usedPrefix}${command} neveloopp`, description: "ℂ𝔻ℕ 𝕌𝕝𝕥𝕣𝕒𝕡𝕝𝕦𝕤" }
+                    ]
+                }
+            ]
 
-if (args[0]) {
-let link = ''
-let serverName = ''
-
-switch (args[0].toLowerCase()) {
-case 'catbox':
-serverName = 'CαƚႦσx'
-link = await catbox(media)
-break
-case 'wpfastest':
-serverName = 'WρFαʂƚҽʂƚ'
-link = await wpfastestcache(media)
-break
-case 'mediafire':
-serverName = 'Mҽԃιαϝιɾҽ'
-link = await mediafireUpload(media, mime)
-break
-case 'litter':
-serverName = 'Lιƚƚҽɾ'
-link = await litterUpload(media)
-break
-case 'neveloopp':
-serverName = 'Nҽʋҽʅσσρρ'
-link = await neveloopp(media)
-break
-default:
-return m.reply(toStyled('Servicio no valido'))
-}
-
-if (!link) return m.reply(toStyled('Error al subir el archivo'))
-
-const txt = `•——————•°•✿•°•——————•
-╰┈➤ Uρʅσαԃ Sҽɾʋιƈҽ ⌇°•
+            const listMessage = {
+                text: `•——————•°•✿•°•——————•
+╰┈➤ 𝕌ℙ𝕃𝕆𝔸𝔻 ℂ𝔼ℕ𝕋𝔼ℝ ⌇°•
+⊱┊ 𝕊𝕖𝕝𝕖𝕔𝕔𝕚𝕠𝕟𝕒 𝕦𝕟 𝕤𝕖𝕣𝕧𝕚𝕕𝕠𝕣
 ●～●～●～●～●～●～●～●～
 
-➮ Sҽɾʋιԃσɾ: °❀ *${serverName}*
-➮ Tαɱαñσ: °❀ *${fileSize}*
-➮ Exριɾα: °❀ *${isTele ? 'Nσ ҽxριɾα' : 'Dҽʂƈσɳσƈιԃσ'}*
+➮ 𝔸𝕣𝕔𝕙𝕚𝕧𝕠: °❀ *${mime}*
+➮ 𝕋𝕒𝕞𝕒ñ𝕠: °❀ *${q.msg?.fileLength ? formatBytes(q.msg.fileLength) : '𝔻𝕖𝕤𝕔𝕠𝕟𝕠𝕔𝕚𝕕𝕠'}*
 
-ׂ╰┈➤ *Eɳʅαƈҽ ԃιɾҽƈƚσ αႦαʝσ*`
+↶*ೃ✧˚. ❃ ↷ ˊ-`,
+                footer: "⊱┊ MαყBσƚ ᵇʸ ˢᵒʸᵐᵃʸᶜᵒˡ ❦",
+                title: "☁️ 𝕊𝕖𝕝𝕖𝕔𝕥𝕠𝕣 𝕕𝕖 ℕ𝕦𝕓𝕖",
+                buttonText: "⊱┊ ℍ𝕒𝕫 ℂ𝕝𝕚𝕔 𝔸𝕢𝕦𝕚",
+                sections
+            }
+            return await conn.sendMessage(m.chat, listMessage, { quoted: m })
+        }
 
-await conn.sendMessage(m.chat, {
-text: txt,
-buttons: [
-{
-buttonId: 'url',
-buttonText: { displayText: '[ 🔗 ] Iɾ αʅ Eɳʅαƈҽ' },
-type: 1,
-url: link
-}
-],
-headerType: 1,
-viewOnce: true
-}, { quoted: m })
-await m.react('✔️')
+        await m.react('🕒')
+        const media = await q.download()
+        let link = ''
+        let serviceName = ''
 
-} else {
-const menuText = `•——————•°•✿•°•——————•
-╰┈➤ Sҽʅҽƈƈισɳα Sҽɾʋιԃσɾ ⌇°•
+        switch (args[0].toLowerCase()) {
+            case 'catbox':
+                serviceName = 'ℂ𝕒𝕥𝕓𝕠𝕩'
+                link = await catbox(media)
+                break
+            case 'wpfastest':
+                serviceName = '𝕎ℙ𝔽𝕒𝕤𝕥𝕖𝕤𝕥'
+                link = await wpFastest(media)
+                break
+            case 'mediafire':
+                serviceName = '𝕄𝕖𝕕𝕚𝕒𝕗𝕚𝕣𝕖'
+                link = await mediaFire(media, mime)
+                break
+            case 'litter':
+                serviceName = '𝕃𝕚𝕥𝕥𝕖𝕣𝔹𝕠𝕩'
+                link = await litter(media)
+                break
+            case 'neveloopp':
+                serviceName = 'ℕ𝕖𝕧𝕖𝕝𝕠𝕠𝕡'
+                link = await neveloopp(media)
+                break
+            case 'telegraph':
+            default:
+                serviceName = '𝕋𝕖𝕝𝕖𝕘𝕣𝕒𝕡𝕙'
+                link = await uploadImage(media)
+                break
+        }
+
+        if (!link) throw new Error('Error al subir el archivo')
+
+        const txt = `•——————•°•✿•°•——————•
+╰┈➤ ℝ𝔼𝕊𝕌𝕃𝕋𝔸𝔻𝕆 ⌇°•
+⊱┊ 𝕊𝕖𝕣𝕧𝕚𝕕𝕠𝕣: ${serviceName}
 ●～●～●～●～●～●～●～●～
 
-Rҽʂρσɳԃҽ ƈσɳ ҽʅ ɳσɱႦɾҽ ԃҽʅ ʂҽɾʋιԃσɾ
-σ ρɾҽʂισɳα ʅσʂ Ⴆσƚσɳҽʂ
+➮ 𝕌ℝ𝕃: °❀ ${link}
+➮ 𝕋𝕒𝕞𝕒ñ𝕠: °❀ ${formatBytes(media.length)}
 
-1. CαƚႦσx
-2. WρFαʂƚҽʂƚ
-3. Mҽԃιαϝιɾҽ
-4. Lιƚƚҽɾ
-5. Nҽʋҽʅσσρρ`
+↶*ೃ✧˚. ❃ ↷ ˊ-`
 
-await conn.sendMessage(m.chat, {
-text: menuText,
-buttons: [
-{ buttonId: `${usedPrefix + command} catbox`, buttonText: { displayText: 'CαƚႦσx' }, type: 1 },
-{ buttonId: `${usedPrefix + command} wpfastest`, buttonText: { displayText: 'WρFαʂƚҽʂƚ' }, type: 1 },
-{ buttonId: `${usedPrefix + command} mediafire`, buttonText: { displayText: 'Mҽԃιαϝιɾҽ' }, type: 1 },
-{ buttonId: `${usedPrefix + command} litter`, buttonText: { displayText: 'Lιƚƚҽɾ' }, type: 1 },
-{ buttonId: `${usedPrefix + command} neveloopp`, buttonText: { displayText: 'Nҽʋҽʅσσρρ' }, type: 1 }
-],
-headerType: 1
-}, { quoted: m })
-}
+        await conn.sendMessage(m.chat, {
+            text: txt,
+            buttons: [
+                {
+                    buttonId: 'url',
+                    buttonText: { displayText: '⊱┊ 𝕀𝕣 𝕒𝕝 𝔼𝕟𝕝𝕒𝕔𝕖' },
+                    type: 1,
+                    url: link
+                }
+            ],
+            headerType: 1,
+            viewOnce: true
+        }, { quoted: m })
 
-} catch (error) {
-await m.react('✖️')
-console.error(error)
-await conn.reply(m.chat, toStyled(`Error: ${error.message}`), m)
-}
+        await m.react('✔️')
+
+    } catch (error) {
+        await m.react('✖️')
+        console.error(error)
+        await conn.reply(m.chat, `⚠︎ 𝕆𝕔𝕦𝕣𝕣𝕚𝕠 𝕦𝕟 𝕖𝕣𝕣𝕠𝕣\n> ${error.message}`, m)
+    }
 }
 
 handler.help = ['tourl']
@@ -126,143 +140,156 @@ handler.command = ['tourl', 'upload']
 export default handler
 
 function formatBytes(bytes) {
-if (bytes === 0) return '0 B'
-const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
-const i = Math.floor(Math.log(bytes) / Math.log(1024))
-return `${(bytes / 1024 ** i).toFixed(2)} ${sizes[i]}`
+    if (bytes === 0) return '0 B'
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+    const i = Math.floor(Math.log(bytes) / Math.log(1024))
+    return `${(bytes / 1024 ** i).toFixed(2)} ${sizes[i]}`
+}
+
+async function uploadImage(buffer) {
+    const { ext } = await fileTypeFromBuffer(buffer)
+    let form = new FormData()
+    form.append('file', new Blob([buffer]), 'tmp.' + ext)
+    let res = await fetch('https://telegra.ph/upload', {
+        method: 'POST',
+        body: form
+    })
+    let img = await res.json()
+    if (img.error) throw img.error
+    return 'https://telegra.ph' + img[0].src
 }
 
 async function catbox(content) {
-const { ext, mime } = (await fileTypeFromBuffer(content)) || {}
-const blob = new Blob([content], { type: mime })
-const formData = new FormData()
-const randomBytes = crypto.randomBytes(5).toString("hex")
-formData.append("reqtype", "fileupload")
-formData.append("fileToUpload", blob, randomBytes + "." + ext)
-const response = await fetch("https://catbox.moe/user/api.php", { method: "POST", body: formData, headers: { "User-Agent": "Mozilla/5.0 (X11; Linux x86_64)" }})
-return await response.text()
+    const { ext, mime } = (await fileTypeFromBuffer(content)) || {}
+    const blob = new Blob([content], { type: mime })
+    const formData = new FormData()
+    const randomBytes = crypto.randomBytes(5).toString("hex")
+    formData.append("reqtype", "fileupload")
+    formData.append("fileToUpload", blob, randomBytes + "." + ext)
+    const response = await fetch("https://catbox.moe/user/api.php", {
+        method: "POST",
+        body: formData,
+        headers: { "User-Agent": "Mozilla/5.0 (X11; Linux x86_64)" }
+    })
+    return await response.text()
 }
 
-async function wpfastestcache(buffer) {
-const { ext, mime } = await fileTypeFromBuffer(buffer) || { ext: 'txt', mime: 'text/plain' }
-const formData = new FormData()
-const filename = `${crypto.randomBytes(5).toString('hex')}.${ext}`
-const blob = new Blob([buffer], { type: mime })
-formData.append("fileToUpload", blob, filename)
-const response = await fetch("https://img-tr.wpfc.ml/yukle.php", {
-method: "POST",
-body: formData,
-headers: {
-"Accept": "/",
-"User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
-"Referer": "https://www.wpfastestcache.com/es/subir-imagen/",
-"Origin": "https://www.wpfastestcache.com",
-"Upgrade-Insecure-Requests": "1"
-}
-})
-const data = await response.json()
-return data.url
+async function wpFastest(buffer) {
+    const { ext, mime } = (await fileTypeFromBuffer(buffer)) || {}
+    const blob = new Blob([buffer], { type: mime })
+    const formData = new FormData()
+    const randomBytes = crypto.randomBytes(8).toString("hex")
+    formData.append("fileToUpload", blob, randomBytes + "." + ext)
+    
+    const response = await fetch("https://img-tr.wpfc.ml/yukle.php", {
+        method: "POST",
+        body: formData,
+        headers: {
+            "Accept": "*/*",
+            "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
+            "Origin": "https://www.wpfastestcache.com",
+            "Referer": "https://www.wpfastestcache.com/es/subir-imagen/"
+        }
+    })
+    const json = await response.json()
+    if (!json.success) throw new Error("WPFastest Failed")
+    return json.url
 }
 
 async function neveloopp(buffer) {
-const { ext, mime } = await fileTypeFromBuffer(buffer) || { ext: 'bin', mime: 'application/octet-stream' }
-const formData = new FormData()
-const filename = `${crypto.randomBytes(8).toString('hex')}.${ext}`
-const blob = new Blob([buffer], { type: mime })
-formData.append("file", blob, filename)
-const response = await fetch("https://cdn-neveloopp.ultraplus.click/upload", {
-method: "POST",
-body: formData,
-headers: { "Accept": "application/json" }
-})
-const data = await response.json()
-return data.url
+    const { ext, mime } = (await fileTypeFromBuffer(buffer)) || {}
+    const blob = new Blob([buffer], { type: mime })
+    const formData = new FormData()
+    const randomBytes = crypto.randomBytes(8).toString("hex")
+    formData.append("file", blob, randomBytes + "." + ext)
+
+    const response = await fetch("https://cdn-neveloopp.ultraplus.click/upload", {
+        method: "POST",
+        body: formData,
+        headers: { "Accept": "application/json" }
+    })
+    const json = await response.json()
+    if (!json.success) throw new Error("Neveloopp Failed")
+    return json.url
 }
 
-async function litterUpload(buffer) {
-const { ext, mime } = await fileTypeFromBuffer(buffer) || { ext: 'bin', mime: 'application/octet-stream' }
-const form = new FormData()
-const filename = `${crypto.randomBytes(5).toString('hex')}.${ext}`
-const blob = new Blob([buffer], { type: mime })
-form.append("file", blob, filename)
-form.append("expireAfter", "99999999999999")
-form.append("burn", "false")
-const token = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
-const r = (Math.random() * 16) | 0
-return (c === "x" ? r : (r & 0x3) | 0x8).toString(16)
-})
-const response = await axios.post(
-"https://litter.lusia.moe/post/upload",
-form,
-{
-params: { token },
-headers: {
-"authority": "litter.lusia.moe",
-"accept": "application/json, text/plain, /",
-"origin": "https://litter.lusia.moe",
-"referer": "https://litter.lusia.moe/",
-"user-agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Mobile Safari/537.36"
-}
-}
-)
-return `https://litter.lusia.moe/${response.data.path}`
+async function litter(buffer) {
+    const { ext } = (await fileTypeFromBuffer(buffer)) || {}
+    const tempPath = path.join(os.tmpdir(), `litter_${crypto.randomBytes(4).toString('hex')}.${ext}`)
+    fs.writeFileSync(tempPath, buffer)
+
+    try {
+        const fileStream = fs.createReadStream(tempPath)
+        const form = new FormData()
+        form.append("file", new Blob([buffer]), path.basename(tempPath))
+        form.append("expireAfter", "24h")
+        form.append("burn", "false")
+
+        const token = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+            const r = (Math.random() * 16) | 0
+            return (c === "x" ? r : (r & 0x3) | 0x8).toString(16)
+        })
+
+        const response = await axios.post("https://litter.lusia.moe/post/upload", form, {
+            params: { token },
+            headers: {
+                "authority": "litter.lusia.moe",
+                "user-agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Mobile Safari/537.36"
+            }
+        })
+        return `https://litter.lusia.moe/${response.data.path}`
+    } finally {
+        if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath)
+    }
 }
 
-async function mediafireUpload(buffer, mimetype) {
-const { ext } = await fileTypeFromBuffer(buffer) || { ext: 'bin' }
-const filename = `file_${crypto.randomBytes(4).toString('hex')}.${ext}`
-const jar = new CookieJar()
-const client = wrapper(axios.create({ jar, withCredentials: true, timeout: 30000, headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36" } }))
+async function mediaFire(buffer, mimetype) {
+    const ext = (await fileTypeFromBuffer(buffer))?.ext || 'bin'
+    const tempPath = path.join(os.tmpdir(), `mediafire_${crypto.randomBytes(4).toString('hex')}.${ext}`)
+    fs.writeFileSync(tempPath, buffer)
 
-const getSecurity = async () => {
-const res = await client.get("https://www.mediafire.com/upgrade/registration.php?pid=free", { headers: { Accept: "text/html" } })
-const $ = cheerio.load(res.data)
-return $('input[name="security"]').val()
-}
+    try {
+        const jar = new CookieJar()
+        const client = wrapper(axios.create({ jar, withCredentials: true, timeout: 30000, headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36" } }))
+        
+        const res = await client.get("https://www.mediafire.com/upgrade/registration.php?pid=free", { headers: { Accept: "text/html" } })
+        const $ = cheerio.load(res.data)
+        const security = $('input[name="security"]').val()
+        if (!security) throw new Error("SECURITY_TOKEN_NOT_FOUND")
 
-const registerAccount = async (security) => {
-const email = `${crypto.randomBytes(4).toString('hex')}@baguss.xyz`
-const payload = qs.stringify({
-security,
-reg_first_name: "User",
-reg_last_name: "Temp",
-reg_email: email,
-reg_pass: "bagusapi2134",
-agreement: "3.25",
-pid: "free",
-signup_continue: "Create Account & Continue"
-})
-const res = await client.post("https://www.mediafire.com/dynamic/register_gopro.php", payload, {
-headers: { "Content-Type": "application/x-www-form-urlencoded", Origin: "https://www.mediafire.com", Referer: "https://www.mediafire.com/upgrade/registration.php?pid=free" }
-})
-if (res.data?.status !== "success" || !res.data?.session_token) throw new Error("REGISTER_FAILED")
-return res.data.session_token
-}
+        const email = `${Math.random().toString(36).slice(2)}@baguss.xyz`
+        const payload = qs.stringify({ security, reg_first_name: "Antwan", reg_last_name: "Frami", reg_email: email, reg_display: "", reg_pass: "bagusapi2134", agreement: "3.25", pid: "free", signup_continue: "Create Account & Continue" })
+        
+        const regRes = await client.post("https://www.mediafire.com/dynamic/register_gopro.php", payload, { headers: { "Content-Type": "application/x-www-form-urlencoded", Origin: "https://www.mediafire.com", Referer: "https://www.mediafire.com/upgrade/registration.php?pid=free" } })
+        if (regRes.data?.status !== "success" || !regRes.data?.session_token) throw new Error("REGISTER_FAILED")
+        
+        const sessionToken = regRes.data.session_token
+        const filename = path.basename(tempPath)
+        const fileData = fs.readFileSync(tempPath)
+        
+        const form = new FormData()
+        form.append("filename", new Blob([fileData]), filename)
+        form.append("uploadapi", "yes")
+        form.append("response_format", "json")
 
-const uploadLegacy = async (sessionToken) => {
-const form = new FormData()
-const blob = new Blob([buffer], { type: mimetype })
-form.append("filename", blob, filename)
-form.append("uploadapi", "yes")
-form.append("response_format", "json")
-const init = await axios.post("https://www.mediafire.com/api/upload/upload.php?session_token=" + encodeURIComponent(sessionToken), form, {
-headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36" },
-maxBodyLength: Infinity
-})
-const raw = typeof init.data === "string" ? init.data : JSON.stringify(init.data)
-const keyMatch = raw.match(/<key>(.*?)<\/key>/i)
-if (!keyMatch) throw new Error("UPLOAD_KEY_NOT_FOUND")
-const key = keyMatch[1]
-while (true) {
-await new Promise(r => setTimeout(r, 1500))
-const poll = await axios.post("https://www.mediafire.com/api/upload/poll_upload.php?session_token=" + encodeURIComponent(sessionToken), qs.stringify({ key, response_format: "json" }), {
-headers: { "Content-Type": "application/x-www-form-urlencoded" }
-})
-const data = poll?.data?.response?.doupload
-if (data?.status === "99") return `https://www.mediafire.com/file/${data.quickkey || key}/${encodeURIComponent(filename)}`
-}
-}
-const security = await getSecurity()
-const session_token = await registerAccount(security)
-return await uploadLegacy(session_token)
+        const uploadInit = await axios.post("https://www.mediafire.com/api/upload/upload.php?session_token=" + encodeURIComponent(sessionToken), form, { headers: { "User-Agent": "Mozilla/5.0" } })
+        
+        const raw = typeof uploadInit.data === "string" ? uploadInit.data : JSON.stringify(uploadInit.data)
+        const keyMatch = raw.match(/<key>(.*?)</key>/i)
+        if (!keyMatch) throw new Error("UPLOAD_KEY_NOT_FOUND")
+        const key = keyMatch[1]
+
+        let resultUrl = ''
+        while (!resultUrl) {
+            const poll = await axios.post("https://www.mediafire.com/api/upload/poll_upload.php?session_token=" + encodeURIComponent(sessionToken), qs.stringify({ key, response_format: "json" }), { headers: { "Content-Type": "application/x-www-form-urlencoded" } })
+            const data = poll?.data?.response?.doupload
+            if (data?.status === "99") {
+                resultUrl = `https://www.mediafire.com/file/${data.quickkey}/${encodeURIComponent(filename)}`
+            }
+            await new Promise(r => setTimeout(r, 1500))
+        }
+        return resultUrl
+    } finally {
+        if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath)
+    }
 }
