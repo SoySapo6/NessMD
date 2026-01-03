@@ -1,136 +1,120 @@
 import { createHash } from 'crypto'
 import fetch from 'node-fetch'
 import axios from 'axios'
-import FormData from 'form-data'
+import { FormData, Blob } from 'formdata-node'
 import { fileTypeFromBuffer } from 'file-type'
 import crypto from 'crypto'
-import * as cheerio from 'cheerio'
+import cheerio from 'cheerio'
+import qs from 'qs'
 import { CookieJar } from 'tough-cookie'
 import { wrapper } from 'axios-cookiejar-support'
-import { FormData as FormDataNode, Blob } from 'formdata-node'
 
 const handler = async (m, { conn, command, usedPrefix, args, text }) => {
     try {
         let q = m.quoted ? m.quoted : m
         let mime = (q.msg || q).mimetype || ''
-        
-        if (!mime) {
-            await m.react('✖️')
-            return conn.reply(m.chat, '╰┈➤ ❀ Pσɾ ϝαʋσɾ, ɾҽʂρσɳԃҽ α υɳ *Aɾƈԋιʋσ*, *Iɱαɠҽɳ* σ *Vιԃҽσ*.', m)
+        if (!mime) return conn.reply(m.chat, '╰┈➤ ❀ Pσɾ ϝαʋσɾ, ɾҽʂρσɳԃҽ α υɳα *Iɱαɠҽɳ* σ *Vίԃҽσ* σ *Aɾƈԋιʋσ*.', m)
+
+        const services = ['catbox', 'wpfc', 'neveloopp', 'litter', 'mediafire']
+        const selectedService = text ? text.toLowerCase().trim() : null
+
+        const toStyled = (text) => {
+            const normal = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            const styled = "αႦƈԃҽϝɠԋιʝƙʅɱɳσρϙɾʂƚυʋɯxყȥAƁCƊEƑGHIJKLMNOPQRSTUVWXYZ"
+            return text.split('').map(char => {
+                let i = normal.indexOf(char)
+                return i !== -1 ? styled[i] : char
+            }).join('')
+        }
+
+        if (!selectedService || !services.includes(selectedService)) {
+            let menuText = `•——————•°•✿•°•——————•
+╰┈➤ Sҽɾʋιƈισʂ ԃҽ SυႦιԃα ☁
+⊱┊ Eʅιɠҽ υɳ ʂҽɾʋιƈισ ɾҽʂρσɳԃιҽɳԃσ
+⊱┊ ƈσɳ: *${usedPrefix + command} <nombre>*
+●～●～●～●～●～●～●～●～
+
+`
+            services.forEach(svc => {
+                menuText += `ೃ‧₊› ${toStyled(svc.toUpperCase())}\n`
+            })
+            
+            menuText += `\n↶*ೃ✧˚. ❃ ↷ ˊ-`
+            
+            return conn.reply(m.chat, menuText, m)
         }
 
         await m.react('🕒')
         const media = await q.download()
-        const fileSize = formatBytes(media.length)
-        const fileTypeInfo = await fileTypeFromBuffer(media) || { ext: 'bin', mime: mime }
-        const fileName = `file_${crypto.randomBytes(4).toString('hex')}.${fileTypeInfo.ext}`
-
-        if (!text && !args[0]) {
-            const menuText = `•——————•°•✿•°•——————•
-╰┈➤ Sҽʅҽƈƈισɳҽ Sҽɾʋιƈισ ⌇°•
-⊱┊ Aɾƈԋιʋσ: ${fileTypeInfo.ext.toUpperCase()}
-⊱┊ Pҽʂσ: ${fileSize}
-●～●～●～●～●～●～●～●～
-
-➮ Uʂα ʅσʂ Ⴆσƚσɳҽʂ ραɾα ҽʅҽɠιɾ ԃσɳԃҽ ʂυႦιɾ ƚυ αɾƈԋιʋσ.
-➮ Sι ϝαʅʅα υɳσ, ιɳƚҽɳƚα ƈσɳ σƚɾσ.
-
-↶*ೃ✧˚. ❃ ↷ ˊ-↶*ೃ✧˚. ❃ ↷ ˊ-`.trim()
-
-            const buttons = [
-                { buttonId: `${usedPrefix + command} catbox`, buttonText: { displayText: '╰┈➤ 🐱 CαƚႦσx' }, type: 1 },
-                { buttonId: `${usedPrefix + command} mediafire`, buttonText: { displayText: '╰┈➤ 📁 Mҽԃιαϝιɾҽ' }, type: 1 },
-                { buttonId: `${usedPrefix + command} litter`, buttonText: { displayText: '╰┈➤ 🚮 Lιƚƚҽɾ' }, type: 1 },
-                { buttonId: `${usedPrefix + command} ultra`, buttonText: { displayText: '╰┈➤ ☁️ UʅƚɾαPʅυʂ' }, type: 1 },
-            ]
-
-            if (/image/.test(mime)) {
-                buttons.push({ buttonId: `${usedPrefix + command} wpfc`, buttonText: { displayText: '╰┈➤ ⚡ WρFαʂƚ' }, type: 1 })
-            }
-
-            await conn.sendMessage(m.chat, {
-                text: menuText,
-                buttons: buttons,
-                footer: '⊱┊ MαყBσƚ Uρʅσαԃҽɾ ❦',
-                headerType: 1
-            }, { quoted: m })
-            
-            await m.react('✔️')
-            return
-        }
-
         let link = ''
         let serviceName = ''
-        const type = text.toLowerCase()
 
-        if (type.includes('catbox')) {
-            serviceName = 'CαƚႦσx'
-            link = await catbox(media)
-        } else if (type.includes('mediafire')) {
-            serviceName = 'Mҽԃιαϝιɾҽ'
-            link = await mediafireUpload(media, fileName)
-        } else if (type.includes('litter')) {
-            serviceName = 'Lιƚƚҽɾ'
-            link = await litterUpload(media, fileName)
-        } else if (type.includes('ultra')) {
-            serviceName = 'UʅƚɾαPʅυʂ'
-            link = await ultraUpload(media, fileName)
-        } else if (type.includes('wpfc')) {
-            if (!/image/.test(mime)) throw new Error('Este servicio solo admite imágenes.')
-            serviceName = 'WρFαʂƚ'
-            link = await wpfastestUpload(media, fileName)
-        } else {
-             serviceName = 'Aυƚσ (CαƚႦσx)'
-             link = await catbox(media)
+        switch (selectedService) {
+            case 'catbox':
+                link = await catbox(media)
+                serviceName = 'CαƚႦσx'
+                break
+            case 'wpfc':
+                link = await wpfastestcache(media)
+                serviceName = 'WρFαʂƚҽʂƚCαƈԋҽ'
+                break
+            case 'neveloopp':
+                link = await neveloopp(media)
+                serviceName = 'Nҽʋҽʅσσρρ'
+                break
+            case 'litter':
+                link = await litter(media)
+                serviceName = 'Lιƚƚҽɾ'
+                break
+            case 'mediafire':
+                link = await mediafireUploader(media)
+                serviceName = 'Mҽԃιαϝιɾҽ'
+                break
         }
 
-        if (!link) throw new Error('No se obtuvo respuesta del servidor.')
+        if (!link) throw new Error('Error al obtener el enlace')
 
+        const size = formatBytes(media.length)
         const txt = `•——————•°•✿•°•——————•
-╰┈➤ Rҽʂυʅƚαԃσ ⌇°•
+╰┈➤ SυႦιԃα Exιƚσʂα
 ⊱┊ Sҽɾʋιƈισ: ${serviceName}
-●～●～●～●～●～●～●～●～
-
-➮ Eɳʅαƈҽ: °❀ *${link}*
-➮ Tαɱαñσ: °❀ *${fileSize}*
-➮ Exριɾα: °❀ *Dҽʂƈσɳσƈιԃσ*
-
-↶*ೃ✧˚. ❃ ↷ ˊ-`.trim()
+⊱┊ Tαɱαñσ: ${size}
+●～●～●～●～●～●～●～●～`
 
         await conn.sendMessage(m.chat, {
             text: txt,
+            buttons: [
+                {
+                    buttonId: 'url',
+                    buttonText: { displayText: `[ 🔗 ] Vҽɾ Eɳ ${serviceName}` },
+                    type: 1,
+                    url: link
+                }
+            ],
             contextInfo: {
                 externalAdReply: {
-                    title: `Aɾƈԋιʋσ SυႦιԃσ Exιƚσʂαɱҽɳƚҽ`,
-                    body: '⊱┊ MαყBσƚ Uρʅσαԃҽɾ ❦',
-                    thumbnailUrl: 'https://cdn-icons-png.flaticon.com/512/10099/10099233.png',
+                    title: `Aɾƈԋιʋσ SυႦιԃσ A ${serviceName}`,
+                    body: 'Cʅιƈƙ ραɾα ʋҽɾ',
+                    thumbnailUrl: 'https://cdn-icons-png.flaticon.com/512/10574/10574768.png',
                     sourceUrl: link,
                     mediaType: 1,
                     renderLargerThumbnail: true
                 }
-            },
-            buttons: [
-                {
-                    buttonId: 'url',
-                    buttonText: { displayText: '╰┈➤ 🔗 Iɾ αʅ Eɳʅαƈҽ' },
-                    type: 1,
-                    url: link
-                }
-            ]
+            }
         }, { quoted: m })
 
-        await m.react('✅')
+        await m.react('✔️')
 
     } catch (error) {
         console.error(error)
         await m.react('✖️')
-        await conn.reply(m.chat, `⚠︎ Sҽ ԋα ρɾσԃυƈιԃσ υɳ ρɾσႦʅҽɱα.\n> ${error.message}`, m)
+        await conn.reply(m.chat, `⚠︎ Sҽ ԋα ρɾσԃυƈιԃσ υɳ ρɾσႦʅҽɱα.\n> Iɳƚҽɳƚα ƈσɳ σƚɾσ ʂҽɾʋιƈισ.`, m)
     }
 }
 
-handler.help = ['tourl', 'catbox', 'mediafire']
+handler.help = ['tourl']
 handler.tags = ['tools']
-handler.command = ['tourl', 'catbox', 'mediafire', 'upload']
+handler.command = ['tourl', 'upload']
 
 export default handler
 
@@ -142,149 +126,158 @@ function formatBytes(bytes) {
 }
 
 async function catbox(content) {
-    const { ext, mime } = (await fileTypeFromBuffer(content)) || {}
+    const { ext, mime } = (await fileTypeFromBuffer(content)) || { ext: 'bin', mime: 'application/octet-stream' }
     const blob = new Blob([content], { type: mime })
-    const formData = new FormDataNode()
+    const formData = new FormData()
     const randomBytes = crypto.randomBytes(5).toString("hex")
     formData.append("reqtype", "fileupload")
     formData.append("fileToUpload", blob, randomBytes + "." + ext)
     const response = await fetch("https://catbox.moe/user/api.php", {
         method: "POST",
         body: formData,
-        headers: { "User-Agent": "Mozilla/5.0 (X11; Linux x86_64)" }
+        headers: { "User-Agent": "Mozilla/5.0" }
     })
     return await response.text()
 }
 
-async function wpfastestUpload(buffer, filename) {
+async function wpfastestcache(content) {
+    const { ext, mime } = (await fileTypeFromBuffer(content)) || { ext: 'jpg', mime: 'image/jpeg' }
     const formData = new FormData()
-    formData.append("fileToUpload", buffer, { filename: filename, contentType: 'image/jpeg' })
+    const randomBytes = crypto.randomBytes(8).toString("hex")
+    const blob = new Blob([content], { type: mime })
+    formData.append("fileToUpload", blob, `${randomBytes}.${ext}`)
     
-    const response = await axios.post("https://img-tr.wpfc.ml/yukle.php", formData, {
+    const response = await fetch("https://img-tr.wpfc.ml/yukle.php", {
+        method: "POST",
+        body: formData,
         headers: {
-            ...formData.getHeaders(),
-            "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
+            "Accept": "application/json",
+            "User-Agent": "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36",
             "Referer": "https://www.wpfastestcache.com/es/subir-imagen/",
             "Origin": "https://www.wpfastestcache.com"
         }
     })
-    
-    if (response.data && response.data.success) {
-        return response.data.url
-    } else {
-        throw new Error('Falló la subida a WpFastest')
-    }
+    const json = await response.json()
+    return json.url
 }
 
-async function ultraUpload(buffer, filename) {
+async function neveloopp(content) {
+    const { ext, mime } = (await fileTypeFromBuffer(content)) || { ext: 'bin', mime: 'application/octet-stream' }
     const formData = new FormData()
-    formData.append("file", buffer, filename)
-    
-    const response = await axios.post("https://cdn-neveloopp.ultraplus.click/upload", formData, {
-        headers: {
-            ...formData.getHeaders(),
-            "Accept": "application/json"
-        }
+    const randomBytes = crypto.randomBytes(8).toString("hex")
+    const blob = new Blob([content], { type: mime })
+    formData.append("file", blob, `${randomBytes}.${ext}`)
+
+    const response = await fetch("https://cdn-neveloopp.ultraplus.click/upload", {
+        method: "POST",
+        body: formData,
+        headers: { "Accept": "application/json" }
     })
-    
-    if (response.data && response.data.url) {
-        return response.data.url
-    } else {
-        throw new Error('Falló la subida a UltraPlus')
-    }
+    const json = await response.json()
+    return json.url
 }
 
-async function litterUpload(buffer, filename) {
+async function litter(content) {
+    const { ext, mime } = (await fileTypeFromBuffer(content)) || { ext: 'bin', mime: 'application/octet-stream' }
     const formData = new FormData()
-    formData.append("file", buffer, filename)
-    formData.append("expireAfter", "24") 
+    const randomBytes = crypto.randomBytes(8).toString("hex")
+    const blob = new Blob([content], { type: mime })
+    
+    formData.append("file", blob, `${randomBytes}.${ext}`)
+    formData.append("expireAfter", "99999999999999")
     formData.append("burn", "false")
 
     const token = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
         const r = (Math.random() * 16) | 0;
         return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
-    });
+    })
 
-    const response = await axios.post(
-        "https://litter.lusia.moe/post/upload",
-        formData,
-        {
-            params: { token },
-            headers: {
-                ...formData.getHeaders(),
-                "authority": "litter.lusia.moe",
-                "origin": "https://litter.lusia.moe",
-                "referer": "https://litter.lusia.moe/",
-                "user-agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Mobile Safari/537.36",
-            },
+    const response = await fetch("https://litter.lusia.moe/post/upload?token=" + token, {
+        method: "POST",
+        body: formData,
+        headers: {
+            "authority": "litter.lusia.moe",
+            "origin": "https://litter.lusia.moe",
+            "referer": "https://litter.lusia.moe/",
+            "user-agent": "Mozilla/5.0"
         }
-    )
+    })
     
-    return `https://litter.lusia.moe/${response.data.path}`
+    const json = await response.json()
+    return `https://litter.lusia.moe/${json.path}`
 }
 
-async function mediafireUpload(buffer, filename) {
+async function mediafireUploader(content) {
+    const { ext, mime } = (await fileTypeFromBuffer(content)) || { ext: 'bin', mime: 'application/octet-stream' }
     const jar = new CookieJar()
     const client = wrapper(axios.create({ jar, withCredentials: true, timeout: 30000 }))
     const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
     
-    const getSecurity = async () => {
-        const res = await client.get("https://www.mediafire.com/upgrade/registration.php?pid=free", { headers: { "User-Agent": UA } })
-        const $ = cheerio.load(res.data)
-        return $('input[name="security"]').val()
-    }
+    const sleep = ms => new Promise(r => setTimeout(r, ms))
+    const rand = (n = 6) => Math.random().toString(36).slice(2, 2 + n)
+    const genEmail = () => `${rand()}@baguss.xyz`
 
-    const registerAccount = async (security) => {
-        const email = `${Math.random().toString(36).slice(2)}@baguss.xyz`
-        const payload = new URLSearchParams({
-            security,
-            reg_first_name: "User",
-            reg_last_name: "Test",
-            reg_email: email,
-            reg_pass: "password123",
-            agreement: "3.25",
-            pid: "free",
-            signup_continue: "Create Account & Continue"
-        }).toString()
+    const res = await client.get("https://www.mediafire.com/upgrade/registration.php?pid=free", { headers: { Accept: "text/html", "User-Agent": UA } })
+    const $ = cheerio.load(res.data)
+    const security = $('input[name="security"]').val()
+    
+    const email = genEmail()
+    const password = "password123"
+    
+    const regPayload = qs.stringify({
+        security,
+        reg_first_name: "User",
+        reg_last_name: "Temp",
+        reg_email: email,
+        reg_display: "",
+        reg_pass: password,
+        agreement: "3.25",
+        pid: "free",
+        signup_continue: "Create Account & Continue"
+    })
 
-        const res = await client.post("https://www.mediafire.com/dynamic/register_gopro.php", payload, {
-            headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": UA, "Referer": "https://www.mediafire.com/upgrade/registration.php?pid=free" }
-        })
-        return res.data.session_token
-    }
+    const regRes = await client.post("https://www.mediafire.com/dynamic/register_gopro.php", regPayload, {
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Origin: "https://www.mediafire.com",
+            Referer: "https://www.mediafire.com/upgrade/registration.php?pid=free",
+            "User-Agent": UA
+        }
+    })
 
-    const security = await getSecurity()
-    if (!security) throw new Error('Mediafire: No token security')
-    const sessionToken = await registerAccount(security)
-    if (!sessionToken) throw new Error('Mediafire: Registro fallido')
+    if (regRes.data?.status !== "success" || !regRes.data?.session_token) throw new Error("Mediafire Registration Failed")
+    const sessionToken = regRes.data.session_token
 
-    const formData = new FormData()
-    formData.append("filename", buffer, filename)
-    formData.append("uploadapi", "yes")
-    formData.append("response_format", "json")
+    const randomName = `${rand(5)}_${rand(5)}.${ext}`
+    const form = new FormData()
+    const blob = new Blob([content], { type: mime })
+    form.append("filename", blob, randomName)
+    form.append("uploadapi", "yes")
+    form.append("response_format", "json")
 
-    const uploadInit = await axios.post(
-        `https://www.mediafire.com/api/upload/upload.php?session_token=${sessionToken}`,
-        formData,
-        { headers: { ...formData.getHeaders(), "User-Agent": UA } }
-    )
+    const init = await fetch(`https://www.mediafire.com/api/upload/upload.php?session_token=${encodeURIComponent(sessionToken)}`, {
+        method: "POST",
+        body: form,
+        headers: { "User-Agent": UA }
+    })
+    
+    const initData = await init.json()
+    const key = initData?.response?.doupload?.key
 
-    const keyMatch = (uploadInit.data.toString() || JSON.stringify(uploadInit.data)).match(/<key>(.*?)<\/key>/i)
-    if (!keyMatch) throw new Error('Mediafire: Key no encontrada')
-    const key = keyMatch[1]
+    if (!key) throw new Error("Mediafire Key Missing")
 
-    let resultUrl = null
-    while (!resultUrl) {
-        await new Promise(r => setTimeout(r, 2000))
+    while (true) {
         const poll = await axios.post(
-            `https://www.mediafire.com/api/upload/poll_upload.php?session_token=${sessionToken}`,
-            new URLSearchParams({ key, response_format: "json" }).toString(),
+            `https://www.mediafire.com/api/upload/poll_upload.php?session_token=${encodeURIComponent(sessionToken)}`,
+            qs.stringify({ key, response_format: "json" }),
             { headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": UA } }
         )
-        
-        if (poll.data?.response?.doupload?.status === "99") {
-            resultUrl = poll.data.response.doupload.file_url || `https://www.mediafire.com/file/${poll.data.response.doupload.quickkey}/${filename}`
+
+        const data = poll?.data?.response?.doupload
+        if (data?.status === "99") {
+            const quickkey = data.quickkey || key
+            return `https://www.mediafire.com/file/${quickkey}/${randomName}`
         }
+        await sleep(1500)
     }
-    return resultUrl
 }
