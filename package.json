@@ -34,6 +34,7 @@
     "bcryptjs": "^3.0.3",
     "body-parser": "^2.2.0",
     "cfonts": "^3.3.0",
+    "tough-cookie": "*",
     "chalk": "^5.6.2",
     "cheerio": "npm:cheerio@1.0.0-rc.12",
     "cookie-parser": "^1.4.7",
