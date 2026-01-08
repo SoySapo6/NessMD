@@ -45,6 +45,9 @@ ${cmds.map(cmd => `╰┈➤ ${cmd}`).join('\n')}
 
     await conn.sendMessage(m.chat, {
         text: menuText,
+        footer: {
+        text: `ᴴᵉᶜʰᵒ ᵖᵒʳ ${global.etiqueta}`
+        },
         buttons: [
             {
                 buttonId: 'github',
