@@ -22,8 +22,10 @@ let handler = async (m, { conn }) => {
   }
 
   let totalreg = Object.keys(global.db.data.users).length
-  let totalCommands = Object.values(global.plugins).filter(v => v.help && v.tags).length
-
+  let totalCommands = Object.values(global.plugins)
+  .filter(p => Array.isArray(p.help))
+  .reduce((a, b) => a + b.help.length, 0)
+  
   let menuText = `•——————•°•✿•°•——————•
 ೃ‧₊› MαყBσƚ ⌇°•
 ⊱┊ ᴴᵉᶜʰᵒ ᵖᵒʳ ${global.etiqueta}
