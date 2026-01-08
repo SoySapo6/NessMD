@@ -4,6 +4,10 @@ let handler = async (m, { conn }) => {
   let userId = m.mentionedJid?.[0] || m.sender
   let categories = {}
 
+  let now = new Date()
+  let hora = now.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  let fecha = now.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+
   for (let plugin of Object.values(global.plugins)) {
     if (!plugin.help || !plugin.tags) continue
     for (let tag of plugin.tags) {
@@ -23,9 +27,9 @@ let handler = async (m, { conn }) => {
 
   let totalreg = Object.keys(global.db.data.users).length
   let totalCommands = Object.values(global.plugins)
-  .filter(p => Array.isArray(p.help))
-  .reduce((a, b) => a + b.help.length, 0)
-  
+    .filter(p => Array.isArray(p.help))
+    .reduce((a, b) => a + b.help.length, 0)
+
   let menuText = `•——————•°•✿•°•——————•
 ೃ‧₊› MαყBσƚ ⌇°•
 ⊱┊ ᴴᵉᶜʰᵒ ᵖᵒʳ ${global.etiqueta}
