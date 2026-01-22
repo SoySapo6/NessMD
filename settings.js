@@ -27,9 +27,9 @@ global.dev = 'SσყMαყƈσʅ ⌇°•'
 global.author = 'SσყMαყƈσʅ ⌇°•'
 global.etiqueta = 'ˢᵒʸᵐᵃʸᶜᵒˡ'
 global.currency = 'NessCoins'
-global.banner = "https://raw.githubusercontent.com/SoySapo6/NessMD/main/lib/banner-ness.png"
-global.icono = "https://raw.githubusercontent.com/SoySapo6/NessMD/main/lib/banner-ness.png"
-global.catalogo = fs.readFileSync('./lib/catalogo-ness.jpg')
+global.banner = "https://files.catbox.moe/aqi8wi.png"
+global.icono = "https://files.catbox.moe/ycagn5.jpeg"
+global.catalogo = fs.readFileSync('./lib/catalogo.jpg')
 
 /* > Información del Creador < */
 global.group = "https://chat.whatsapp.com/JNQMGcG9jl00jYBM1iV8Jn"
