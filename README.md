@@ -1,4 +1,4 @@
-<h1 align="center">MαყBσƚ</h1>
+<h1 align="center">NessMD</h1>
 
 <img src= "lib/catalogo.jpg">
 </p>
@@ -9,7 +9,7 @@ Este proyecto **no está afiliado de ninguna manera** con `WhatsApp`, `Inc. What
 
 ### *`⊱┊ 𝐃𝐞𝐬𝐜𝐫𝐢𝐩𝐜𝐢𝐨𝐧 ❦`*
 
-NessMD es un bot de WhatsApp multifuncional basado en `baileys`. Este bot ofrece una variedad de características para mejorar tu experiencia en WhatsApp.
+NessMD es un bot de WhatsApp multifuncional basado en `baileys` inspirado en Ness de BlueLock. Este bot ofrece una variedad de características para mejorar tu experiencia en WhatsApp.
 
 ### *`⊱┊ 𝐂𝐚𝐫𝐚𝐜𝐭𝐞𝐫𝐢𝐬𝐭𝐢𝐜𝐚𝐬 ❦`*
 
@@ -52,40 +52,40 @@ npm start
 > *Ejecutar estos comandos dentro de la carpeta NessMD*
 ```bash
 termux-wake-lock && npm i -g pm2 && pm2 start index.js && pm2 save && pm2 logs 
-``` 
+```
 #### Opciones Disponibles
 > *Esto eliminará todo el historial que hayas establecido con PM2:*
-```bash 
+```bash
 pm2 delete index
-``` 
+```
 > *Si tienes cerrado Termux y quiere ver de nuevo la ejecución use:*
-```bash 
-pm2 logs 
-``` 
+```bash
+pm2 logs
+```
 > *Si desea detener la ejecución de Termux use:*
-```bash 
+```bash
 pm2 stop index
-``` 
+```
 > *Si desea iniciar de nuevo la ejecución de Termux use:*
-```bash 
+```bash
 pm2 start index
 ```
----- 
+----
 ### En caso de detenerse
 > _Si despues que ya instalastes el bot y termux te salta en blanco, se fue tu internet o reiniciaste tu celular, solo realizaras estos pasos:_
 ```bash
 cd && cd NessMD && npm start
 ```
 ----
-### Obtener nuevo código QR 
+### Obtener nuevo código QR
 > *Detén el bot, haz click en el símbolo (ctrl) [default=z] usar la letra "z" + "ENTER" hasta que salga algo verdes similar a: `NessMD $`*
 > **Escribe los siguientes comandos uno x uno :**
-```bash 
+```bash
 cd && cd NessMD && rm -rf sessions/Principal && npm run qr
 ```
 ----
-### Obtener nuevo código de teléfono 
-```bash 
+### Obtener nuevo código de teléfono
+```bash
 cd && cd NessMD && rm -rf sessions/Principal && npm run code
 ```
 </details>

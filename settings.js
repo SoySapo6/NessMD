@@ -21,12 +21,12 @@ global.jadi = "NessMD/SubBots"
 global.yukiJadibts = true
 
 /* > Personalizacion del Bot < */
-global.botname = '⊱┊ MαყBσƚ ❦'
-global.textbot = 'MαყBσƚ'
+global.botname = '⊱┊ NessMD ❦'
+global.textbot = 'NessMD'
 global.dev = 'SσყMαყƈσʅ ⌇°•'
 global.author = 'SσყMαყƈσʅ ⌇°•'
 global.etiqueta = 'ˢᵒʸᵐᵃʸᶜᵒˡ'
-global.currency = 'MayCoins'
+global.currency = 'NessCoins'
 global.banner = "https://files.catbox.moe/aqi8wi.png"
 global.icono = "https://files.catbox.moe/ycagn5.jpeg"
 global.catalogo = fs.readFileSync('./lib/catalogo.jpg')
