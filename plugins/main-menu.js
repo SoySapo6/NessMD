@@ -31,7 +31,7 @@ let handler = async (m, { conn }) => {
     .reduce((a, b) => a + b.help.length, 0)
 
   let menuText = `•——————•°•✿•°•——————•
- ೃ‧₊› NessMD ⌇°•
+ ೃ‧₊› Ɲҽʂʂɱɖ ⌇°•
 ⊱┊ ᴴᵉᶜʰᵒ ᵖᵒʳ ${global.etiqueta}
 ●～●～●～●～●～●～●～●～
 
@@ -59,7 +59,7 @@ ${cmds.map(cmd => `╰┈➤ ${cmd}`).join('\n')}
             contextInfo: {
               externalAdReply: {
                 title: global.canalNombreM[0],
-                body: '⊱┊ NessMD ᵇʸ ˢᵒʸᵐᵃʸᶜᵒˡ ❦',
+                body: '⊱┊ Ɲҽʂʂɱɖ ᵇʸ ˢᵒʸᵐᵃʸᶜᵒˡ ❦',
                 thumbnailUrl: global.banner,
                 sourceUrl: 'https://soymaycol.icu/',
                 mediaType: 1,

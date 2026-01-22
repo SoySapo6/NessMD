@@ -1,4 +1,4 @@
-<h1 align="center">NessMD</h1>
+<h1 align="center">Ɲҽʂʂɱɖ</h1>
 
 <img src= "lib/catalogo.jpg">
 </p>
@@ -9,7 +9,7 @@ Este proyecto **no está afiliado de ninguna manera** con `WhatsApp`, `Inc. What
 
 ### *`⊱┊ 𝐃𝐞𝐬𝐜𝐫𝐢𝐩𝐜𝐢𝐨𝐧 ❦`*
 
-NessMD es un bot de WhatsApp multifuncional basado en `baileys` inspirado en Ness de BlueLock. Este bot ofrece una variedad de características para mejorar tu experiencia en WhatsApp.
+Ɲҽʂʂɱɖ es un bot de WhatsApp multifuncional basado en `baileys` inspirado en Ness de BlueLock. Este bot ofrece una variedad de características para mejorar tu experiencia en WhatsApp.
 
 ### *`⊱┊ 𝐂𝐚𝐫𝐚𝐜𝐭𝐞𝐫𝐢𝐬𝐭𝐢𝐜𝐚𝐬 ❦`*
 
@@ -78,7 +78,7 @@ cd && cd NessMD && npm start
 ```
 ----
 ### Obtener nuevo código QR
-> *Detén el bot, haz click en el símbolo (ctrl) [default=z] usar la letra "z" + "ENTER" hasta que salga algo verdes similar a: `NessMD $`*
+> *Detén el bot, haz click en el símbolo (ctrl) [default=z] usar la letra "z" + "ENTER" hasta que salga algo verdes similar a: `Ɲҽʂʂɱɖ $`*
 > **Escribe los siguientes comandos uno x uno :**
 ```bash
 cd && cd NessMD && rm -rf sessions/Principal && npm run qr
