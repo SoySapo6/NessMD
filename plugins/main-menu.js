@@ -31,7 +31,7 @@ let handler = async (m, { conn }) => {
     .reduce((a, b) => a + b.help.length, 0)
 
   let menuText = `•——————•°•✿•°•——————•
- ೃ‧₊› NαყʂMƊ ⌇°•
+ ೃ‧₊› ɳҽʂʂɱԃ ⌇°•
  ⊱┊ ᴴᵉᶜʰᵒ ᵖᵒʳ ${global.etiqueta}
  ●～●～●～●～●～●～●～●～
  
@@ -39,7 +39,7 @@ let handler = async (m, { conn }) => {
  ➮ 𝐅𝐞𝐜𝐡𝐚: °❀ *${fecha}*
  ➮ 𝐓𝐢𝐩𝐨: °❀ *${conn.user.jid == global.conn.user.jid ? 'Principal' : 'Sub-Bot'}*
  ➮ 𝐔𝐬𝐮𝐚𝐫𝐢𝐨𝐬: °❀ *${totalreg.toLocaleString()}*
-  ׂ╰┈➤ *${totalCommands}* ℂ𝕠𝕞𝕒𝕟𝕕𝕠𝕤 𝕕𝕚𝕤𝕡𝕠𝕟𝕚𝕓𝕝𝕖𝕤.`
+ ׂ╰┈➤ *${totalCommands}* ℂ𝕠𝕞𝕒𝕟𝕕𝕠𝕤 𝕕𝕚𝕤𝕡𝕠𝕟𝕚𝕓𝕝𝕖𝕤.`
 
   for (let [tag, cmds] of Object.entries(categories)) {
     menuText += `
@@ -59,7 +59,7 @@ ${cmds.map(cmd => `╰┈➤ ${cmd}`).join('\n')}
             contextInfo: {
               externalAdReply: {
                 title: global.canalNombreM[0],
-                body: '⊱┊ NαყʂMƊ ᵇʸ ˢᵒʸᵐᵃʸᶜᵒˡ ❦',
+                body: '⊱┊ ɳҽʂʂɱԃ ᵇʸ ˢᵒʸᵐᵃʸᶜᵒˡ ❦',
                 thumbnailUrl: global.banner,
                 sourceUrl: 'https://soymaycol.icu/',
                 mediaType: 1,
