@@ -1,6 +1,6 @@
 <h1 align="center">Ɲҽʂʂɱɖ</h1>
 
-<img src= "lib/catalogo.jpg">
+<img src= "lib/catalogo-ness.jpg" width="400">
 </p>
 
 ### *`⊱┊ 𝐈𝐧𝐟𝐨𝐫𝐦𝐚𝐜𝐢𝐨𝐧 ❦`*
