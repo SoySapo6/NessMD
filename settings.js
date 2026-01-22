@@ -27,8 +27,8 @@ global.dev = 'SσყMαყƈσʅ ⌇°•'
 global.author = 'SσყMαყƈσʅ ⌇°•'
 global.etiqueta = 'ˢᵒʸᵐᵃʸᶜᵒˡ'
 global.currency = 'NessCoins'
-global.banner = "https://files.catbox.moe/aqi8wi.png"
-global.icono = "https://files.catbox.moe/ycagn5.jpeg"
+global.banner = "https://i.imgur.com/JVZkq6z.jpg"
+global.icono = "https://i.imgur.com/JVZkq6z.jpg"
 global.catalogo = fs.readFileSync('./lib/catalogo.jpg')
 
 /* > Información del Creador < */
