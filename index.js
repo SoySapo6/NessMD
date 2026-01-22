@@ -33,12 +33,12 @@ const PORT = 3001
 
 let { say } = cfonts
 console.log(chalk.magentaBright('\n❀ Iniciando...'))
-say('MayBot', {
+say('NessMD', {
 font: 'BLOCK',
 align: 'center',
 gradient: ['grey', 'white']
 })
-say('Hecho por SoyMaycol', {
+say('NessMD by Ness of BlueLock', {
 font: 'console',
 align: 'center',
 colors: ['cyan', 'magenta', 'yellow']

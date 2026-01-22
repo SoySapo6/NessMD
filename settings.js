@@ -16,8 +16,8 @@ global.prems = []
 /* > Información del sistema < */
 global.libreria = "@soymaycol/baileys"
 global.vs = "^1.8.2|Latest"
-global.sessions = "MayBots/Principal"
-global.jadi = "MayBots/SubBots"
+global.sessions = "NessMD/Principal"
+global.jadi = "NessMD/SubBots"
 global.yukiJadibts = true
 
 /* > Personalizacion del Bot < */
@@ -35,7 +35,7 @@ global.catalogo = fs.readFileSync('./lib/catalogo.jpg')
 global.group = "https://chat.whatsapp.com/JNQMGcG9jl00jYBM1iV8Jn"
 global.community = "https://chat.whatsapp.com/KqkJwla1aq1LgaPiuFFtEY"
 global.channel = "https://whatsapp.com/channel/0029VayXJte65yD6LQGiRB0R"
-global.github = "https://github.com/SoySapo6/MayBot"
+global.github = "https://github.com/SoySapo6/NessMD"
 global.gmail = "soymaycol.cn@gmail.com"
 global.ch = {
 ch1: "120363424241780448@newsletter"

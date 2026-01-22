@@ -9,7 +9,7 @@ Este proyecto **no está afiliado de ninguna manera** con `WhatsApp`, `Inc. What
 
 ### *`⊱┊ 𝐃𝐞𝐬𝐜𝐫𝐢𝐩𝐜𝐢𝐨𝐧 ❦`*
 
-MayBot es un bot de WhatsApp multifuncional basado en `baileys`. Este bot ofrece una variedad de características para mejorar tu experiencia en WhatsApp.
+NessMD es un bot de WhatsApp multifuncional basado en `baileys`. Este bot ofrece una variedad de características para mejorar tu experiencia en WhatsApp.
 
 ### *`⊱┊ 𝐂𝐚𝐫𝐚𝐜𝐭𝐞𝐫𝐢𝐬𝐭𝐢𝐜𝐚𝐬 ❦`*
 
@@ -32,7 +32,7 @@ MayBot es un bot de WhatsApp multifuncional basado en `baileys`. Este bot ofrece
 apt update && apt upgrade && pkg install -y git nodejs ffmpeg imagemagick yarn
 ```
 ```bash
-git clone https://github.com/SoySapo6/MayBot && cd MayBot
+git clone https://github.com/SoySapo6/NessMD && cd NessMD
 ```
 ```bash
 yarn install
@@ -49,7 +49,7 @@ npm start
 <details>
   <summary><b>[ ♠ ] Tҽɳҽɾ ɱáʂ ƚιҽɱρσ αƈƚιʋσ αʅ Ⴆσƚ</b></summary>
 
-> *Ejecutar estos comandos dentro de la carpeta MayBot*
+> *Ejecutar estos comandos dentro de la carpeta NessMD*
 ```bash
 termux-wake-lock && npm i -g pm2 && pm2 start index.js && pm2 save && pm2 logs 
 ``` 
@@ -74,19 +74,19 @@ pm2 start index
 ### En caso de detenerse
 > _Si despues que ya instalastes el bot y termux te salta en blanco, se fue tu internet o reiniciaste tu celular, solo realizaras estos pasos:_
 ```bash
-cd && cd MayBot && npm start
+cd && cd NessMD && npm start
 ```
 ----
 ### Obtener nuevo código QR 
-> *Detén el bot, haz click en el símbolo (ctrl) [default=z] usar la letra "z" + "ENTER" hasta que salga algo verdes similar a: `MayBot $`*
+> *Detén el bot, haz click en el símbolo (ctrl) [default=z] usar la letra "z" + "ENTER" hasta que salga algo verdes similar a: `NessMD $`*
 > **Escribe los siguientes comandos uno x uno :**
 ```bash 
-cd && cd MayBot && rm -rf sessions/Principal && npm run qr
+cd && cd NessMD && rm -rf sessions/Principal && npm run qr
 ```
 ----
 ### Obtener nuevo código de teléfono 
 ```bash 
-cd && cd MayBot && rm -rf sessions/Principal && npm run code
+cd && cd NessMD && rm -rf sessions/Principal && npm run code
 ```
 </details>
 
