@@ -31,15 +31,15 @@ let handler = async (m, { conn }) => {
     .reduce((a, b) => a + b.help.length, 0)
 
   let menuText = `•——————•°•✿•°•——————•
- ೃ‧₊› Ɲҽʂʂɱɖ ⌇°•
-⊱┊ ᴴᵉᶜʰᵒ ᵖᵒʳ ${global.etiqueta}
-●～●～●～●～●～●～●～●～
-
-➮ 𝐇𝐨𝐫𝐚: °❀ *${hora}*
-➮ 𝐅𝐞𝐜𝐡𝐚: °❀ *${fecha}*
-➮ 𝐓𝐢𝐩𝐨: °❀ *${conn.user.jid == global.conn.user.jid ? 'Principal' : 'Sub-Bot'}*
-➮ 𝐔𝐬𝐮𝐚𝐫𝐢𝐨𝐬: °❀ *${totalreg.toLocaleString()}*
-ׂ╰┈➤ *${totalCommands}* ℂ𝕠𝕞𝕒𝕟𝕕𝕠𝕤 𝕕𝕚𝕤𝕡𝕠𝕟𝕚𝕓𝕝𝕖𝕤.`
+ ೃ‧₊› NαყʂMƊ ⌇°•
+ ⊱┊ ᴴᵉᶜʰᵒ ᵖᵒʳ ${global.etiqueta}
+ ●～●～●～●～●～●～●～●～
+ 
+ ➮ 𝐇𝐨𝐫𝐚: °❀ *${hora}*
+ ➮ 𝐅𝐞𝐜𝐡𝐚: °❀ *${fecha}*
+ ➮ 𝐓𝐢𝐩𝐨: °❀ *${conn.user.jid == global.conn.user.jid ? 'Principal' : 'Sub-Bot'}*
+ ➮ 𝐔𝐬𝐮𝐚𝐫𝐢𝐨𝐬: °❀ *${totalreg.toLocaleString()}*
+  ׂ╰┈➤ *${totalCommands}* ℂ𝕠𝕞𝕒𝕟𝕕𝕠𝕤 𝕕𝕚𝕤𝕡𝕠𝕟𝕚𝕓𝕝𝕖𝕤.`
 
   for (let [tag, cmds] of Object.entries(categories)) {
     menuText += `
@@ -59,7 +59,7 @@ ${cmds.map(cmd => `╰┈➤ ${cmd}`).join('\n')}
             contextInfo: {
               externalAdReply: {
                 title: global.canalNombreM[0],
-                body: '⊱┊ Ɲҽʂʂɱɖ ᵇʸ ˢᵒʸᵐᵃʸᶜᵒˡ ❦',
+                body: '⊱┊ NαყʂMƊ ᵇʸ ˢᵒʸᵐᵃʸᶜᵒˡ ❦',
                 thumbnailUrl: global.banner,
                 sourceUrl: 'https://soymaycol.icu/',
                 mediaType: 1,
