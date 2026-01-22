@@ -38,7 +38,7 @@ font: 'BLOCK',
 align: 'center',
 gradient: ['grey', 'white']
 })
-say('Basado en Ness de BlueLock', {
+say('basado en Alexis Ness de BlueLock', {
 font: 'console',
 align: 'center',
 colors: ['cyan', 'magenta', 'yellow']

@@ -1,7 +1,7 @@
 {
   "name": "NessMD",
   "version": "1.0.0",
-  "description": "WhatsApp Bot Multi Device",
+  "description": "WhatsApp Bot Multi Device - Inspirado en Alexis Ness de Blue Lock",
   "main": "index.js",
   "type": "module",
   "directories": {
@@ -23,6 +23,7 @@
     "url": "https://github.com/SoySapo6/NessMD/issues"
   },
   "homepage": "https://github.com/SoySapo6/NessMD/#readme",
+
   "dependencies": {
     "@hapi/boom": "^10.0.1",
     "@vitalets/google-translate-api": "^8.0.0",

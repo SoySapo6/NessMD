@@ -1,6 +1,6 @@
 <h1 align="center">ɳҽʂʂɱԃ</h1>
 
-<img src= "lib/catalogo.jpg" width="400">
+<img src= "lib/alexis-ness-blue-lock.jpg" width="400">
 </p>
 
 ### *`⊱┊ 𝐈𝐧𝐟𝐨𝐫𝐦𝐚𝐜𝐢𝐨𝐧 ❦`*
@@ -9,7 +9,7 @@ Este proyecto **no está afiliado de ninguna manera** con `WhatsApp`, `Inc. What
 
 ### *`⊱┊ 𝐃𝐞𝐬𝐜𝐫𝐢𝐩𝐜𝐢𝐨𝐧 ❦`*
 
-ɳҽʂʂɱԃ es un bot de WhatsApp multifuncional basado en `baileys` inspirado en Ness de BlueLock. Este bot ofrece una variedad de características para mejorar tu experiencia en WhatsApp.
+ɳҽʂʂɱԃ es un bot de WhatsApp multifuncional basado en `baileys` inspirado en Alexis Ness de BlueLock. Este bot ofrece una variedad de características para mejorar tu experiencia en WhatsApp.
 
 ### *`⊱┊ 𝐂𝐚𝐫𝐚𝐜𝐭𝐞𝐫𝐢𝐬𝐭𝐢𝐜𝐚𝐬 ❦`*
 

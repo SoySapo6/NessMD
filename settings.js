@@ -29,7 +29,7 @@ global.etiqueta = 'ˢᵒʸᵐᵃʸᶜᵒˡ'
 global.currency = 'NessCoins'
 global.banner = "https://files.catbox.moe/aqi8wi.png"
 global.icono = "https://files.catbox.moe/ycagn5.jpeg"
-global.catalogo = fs.readFileSync('./lib/catalogo.jpg')
+global.catalogo = fs.readFileSync('./lib/alexis-ness-blue-lock.jpg')
 
 /* > Información del Creador < */
 global.group = "https://chat.whatsapp.com/JNQMGcG9jl00jYBM1iV8Jn"
