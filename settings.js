@@ -5,7 +5,7 @@ import fs from "fs"
 
 /* > Información de la cuenta owner < */
 global.userowner = "SoyMaycol"
-global.passowner = "elpromaki123"
+global.passowner = "mssl71916"
 
 /* > Información del numero < */
 global.botNumber = "" 
